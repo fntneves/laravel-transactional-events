@@ -1,11 +1,14 @@
-# Transactional Events on Laravel <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
+# Transaction-aware Event Dispatcher on Laravel <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
 
-This package brings transactional events to your Laravel application, allowing to achieve consistency between dispatched events and active database transactions.
-<br>
-Without changing a line of code your application will be able to take advantage from transactional events, out of the box.
+This package introduces a transactional layer into Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency level to Laravel applications, on dispatched events within database transactions.
+<br>.
 
 ## Why transactional events?
-When your application hits a size that requires some effort to organize things, you may want to dispatch events on models to represent changes on their state. Let's say, for instance, that a ordering tickets is a complex process that calls an external payment service and triggers a notification that will be sent by e-mail, SMS, ...
+When applications increase on size, developers may end up dispatching events on models, for better organization. In fact, Laravel dispatches some events on Model creation, deletion and so on.
+
+Considering that the process of handling a request may include running several queries against the database, using database transactions becomes mandatory.
+
+The following is a simple example of ordering tickets. Assume this is a process that involves database a connection and a payment registration. In the meanwhile, a custom event is dispatched. This event would result in a listener execution that sends an e-mail to the user that is performing the request.
 
 ```php
 
@@ -14,33 +17,33 @@ DB::transaction(function() {
     $user = User::find(...);
     $concert = Concert::find(...);
     $tickets = $concert->orderTickets($user, 3);
-    PaymentService::createOrder($tickets);
+    PaymentService::registerOrder($tickets);
 });
 
 // Concert.php
 public function orderTickets($user, $amount)
 {
     ...
-    event(UserDisabledAccount::class);
+    event(OrderWasProcessed::class);
 }
 ```
 
-In case the transaction of the example fails due to an error on external payment service or due to other reason in the database-level, such as deadlocks, will rollback all your database changes. **However, the event was actually dispatched and it will be executed, even the whole transaction failed**.
+The transaction of the above example may fail in several points due to several reasons. For instance, it may fail in the moment of `orderTickets` call, and would not be a problem. However, it also can fail due to an error on the payment service or just due to another reason in the database-level, such as a deadlock.
 
-Here is the purpose of this package: if an event is dispatched within a transaction, it will be executed if and only if the transaction succeeds. If the transaction fails, they will never execute.
+All mentioned failures will trigger a rollback all your database changes. That is, will discard the changes performed within the transaction. **The problem is, even when transaction fails, the `OrderWasProcessed` event is dispatched in the meanwhile and will eventually be executed, so user will be notified about something that actually is not real**.
 
-However, if have parts on your code that do not leverage transactions, **events will be dispatched using the default Laravel Event Dispatcher**.
+The purpose of this package is to ensure that events are dispatched if and only if the active transaction succeeds. *It also ensures that the behavior fallbacks to the default if there is no active transaction, leveraging the default event dispatcher.*
 
 ## Installation
-**Note:** This package is only available for Laravel 5.5 LTS.
+**Note: This package is only available for Laravel 5.5 LTS.**
 
-The installation of this package leverages the Package Auto-Discovery feature enabled in Laravel 5.5. Therefore, you just need to add this package to `composer.json` file.
+The installation of this package leverages the Package Auto-Discovery feature of Laravel 5.5. Just add this package to the `composer.json` file and it will be ready for your application.
 
-```php
-composer require "fntneves/laravel-transactional-events"
+```
+composer require fntneves/laravel-transactional-events
 ```
 
-The configuration file can be customized, just publish the provided one `transactional-events.php` to your config folder.
+A configuration file is provided on this package. To customize it, tun the following command to publish the provided configuration file `transactional-events.php` into your config folder.
 
 ```php
 php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
@@ -49,20 +52,38 @@ php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
 
 ## Usage
 
-Once the package is installed, it is ready to use out-of-the-box. By default, it will start to handle all events of `App\Events` namespace as transactional events.
+Once the package is installed, it is ready to use and enabled and, by default, all events within the `App\Events` namespace will behave as transactional events, when dispatched on database transactions.
 
-The `Event::dispatch(...)` facade or the `event(new UserRegistered::class)` helper method can still be used to dispatch events. If you use queues, they will still work smoothly, since this package only adds a transactional layer over the event dispatcher.
+To dispatch an event, the current available `Event` facade and `event()` helper method can still be used. Concretely, dispatch events using the following statements:
 
-**Note:** This package only applies the transactional behavior to events dispatched within a database transaction. Otherwise, it will perform the same as the default Laravel Event Dispatcher.
+```php
+Event::dispatch(...) // Using Event facade
+event(...) // Using helper method
+```
+
+Even if you use queues, they just still work smoothly, because this package does not change the abstract behavior of the event dispatcher.
+
+**Reminder:** Events are handled as transactional when they are dispatched while an active transaction exists. When an event is dispatched and there is no active transaction, the default behavior of the event dispatcher is applied.
 
 
 ## Configuration
 
-**enabled**: The transactional behavior of events can be enable or disable by setting up the `enable` property in configuration file.
+This package provides a configuration file that allows some customization on what events should be transactional. The following keys are present in the configuration file:
 
-**events**: By default, the transactional behavior will be applied to events on `App\Events` namespace. This is configurable to patterns and full namespaces.
+```
+'enabled' => true
+```
+The transactional behavior of events can be enable or disable by setting up the `enable` property in configuration file.
 
-**exclude**: Apart of the transactional events, you can choose specific events to be handled with the default Laravel Event Dispatcher, i.e., without the transactional behavior.
+```
+'events' => ['App\Events']
+```
+By default, the transactional behavior will be applied to events on `App\Events` namespace. Feel free to use patterns and namespaces.
+
+```
+'exclude' => []
+```
+Applications may have specific events that should never be handled as transactional. Specify the events (including patterns) that should bypass the transactional layer and they will be handled only by the default event dispatcher.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
