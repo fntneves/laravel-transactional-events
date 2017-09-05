@@ -37,11 +37,11 @@ class TransactionalEventServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__ . '/../../config/transactional-events.php' => config_path('transactional-events.php'),
+            __DIR__.'/../../config/transactional-events.php' => config_path('transactional-events.php'),
         ]);
 
         $this->mergeConfigFrom(
-            __DIR__ . '/../../config/transactional-events.php', 'transactional-events'
+            __DIR__.'/../../config/transactional-events.php', 'transactional-events'
         );
     }
 }
