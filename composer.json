@@ -1,0 +1,33 @@
+{
+    "name": "fntneves/laravel-transactional-events",
+    "description": "Transactional layer for Laravel Event Dispatcher",
+    "type": "library",
+    "require": {
+        "illuminate/events": "5.5.*",
+        "illuminate/support": "5.5.*",
+        "illuminate/database": "5.5.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^6.3",
+        "mockery/mockery": "^0.9.9"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Francisco Neves",
+            "email": "contact@francisconeves.com"
+        }
+    ],
+    "autoload": {
+        "psr-0": {
+            "Neves\\Events\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Neves\\Events\\EventServiceProvider"
+            ]
+        }
+    }
+}
