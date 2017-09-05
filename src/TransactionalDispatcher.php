@@ -2,12 +2,11 @@
 
 namespace Neves\TransactionalEvents;
 
-use Illuminate\Database\Connection;
-use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Database\ConnectionInterface;
-use Illuminate\Events\Dispatcher as EventDispatcher;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Database\Connection;
+use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\ConnectionResolverInterface;
+use Illuminate\Events\Dispatcher as EventDispatcher;
 
 class TransactionalDispatcher
 {
@@ -142,8 +141,9 @@ class TransactionalDispatcher
      */
     private function isTransactionalEvent(ConnectionInterface $connection, $event)
     {
-        if ($connection->transactionLevel() < 1)
+        if ($connection->transactionLevel() < 1) {
             return false;
+        }
 
         return $this->shouldHandle($event);
     }
@@ -158,13 +158,13 @@ class TransactionalDispatcher
     {
         $event = is_string($event) ? $event : get_class($event);
 
-        foreach($this->except as $exception) {
+        foreach ($this->except as $exception) {
             if ($this->matches($exception, $event)) {
                 return false;
             }
         }
 
-        foreach($this->only as $enabled) {
+        foreach ($this->only as $enabled) {
             if ($this->matches($enabled, $event)) {
                 return true;
             }
@@ -180,7 +180,8 @@ class TransactionalDispatcher
      * @param  string  $event
      * @return bool
      */
-    private function matches($pattern, $event) {
+    private function matches($pattern, $event)
+    {
         return (Str::contains($pattern, '*') && Str::is($pattern, $event))
             || Str::startsWith($event, $pattern);
     }

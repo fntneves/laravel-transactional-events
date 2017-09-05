@@ -1,11 +1,11 @@
 <?php
 
+use Mockery as m;
+use PHPUnit\Framework\TestCase;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Events\Dispatcher;
 use Neves\TransactionalEvents\TransactionalDispatcher;
-use PHPUnit\Framework\TestCase;
-use Mockery as m;
 
 class TransactionalDispatcherTest extends TestCase
 {
@@ -18,7 +18,8 @@ class TransactionalDispatcherTest extends TestCase
         m::close();
     }
 
-    public function setUp() {
+    public function setUp()
+    {
         unset($_SERVER['__event.test']);
         unset($_SERVER['__event.test.bar']);
         unset($_SERVER['__event.test.zen']);
@@ -28,7 +29,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_immediately_dispatches_event_out_of_transactions() {
+    public function it_immediately_dispatches_event_out_of_transactions()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -41,7 +43,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_enqueues_event_dispatched_in_transactions() {
+    public function it_enqueues_event_dispatched_in_transactions()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -54,7 +57,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_dispatches_events_on_commit() {
+    public function it_dispatches_events_on_commit()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -68,7 +72,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_forgets_enqueued_events_on_rollback() {
+    public function it_forgets_enqueued_events_on_rollback()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -82,7 +87,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_immediately_dispatches_events_present_in_exceptions_list() {
+    public function it_immediately_dispatches_events_present_in_exceptions_list()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -96,7 +102,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_immediately_dispatches_events_not_present_in_enabled_list() {
+    public function it_immediately_dispatches_events_not_present_in_enabled_list()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -110,7 +117,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_immediately_dispatches_events_that_do_not_match_a_pattern() {
+    public function it_immediately_dispatches_events_that_do_not_match_a_pattern()
+    {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -124,7 +132,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_enqueues_events_that_do_match_a_pattern() {
+    public function it_enqueues_events_that_do_match_a_pattern()
+    {
         $this->dispatcher->listen('foo/bar', function () {
             $_SERVER['__event.test'] = 'bar';
         });
@@ -138,7 +147,8 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_immediately_dispatches_specific_events_excluded_on_a_pattern() {
+    public function it_immediately_dispatches_specific_events_excluded_on_a_pattern()
+    {
         $this->dispatcher->listen('foo/bar', function () {
             $_SERVER['__event.test.bar'] = 'bar';
         });

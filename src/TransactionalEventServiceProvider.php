@@ -2,8 +2,8 @@
 
 namespace Neves\TransactionalEvents;
 
-use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 
 class TransactionalEventServiceProvider extends ServiceProvider
 {
@@ -21,6 +21,7 @@ class TransactionalEventServiceProvider extends ServiceProvider
             );
         });
     }
+
     /**
      * Bootstrap the application events.
      *
