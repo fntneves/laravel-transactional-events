@@ -41,8 +41,8 @@ class TransactionalDispatcher
     /**
      * Create a new transactional event dispatcher instance.
      *
-     * @param \Illuminate\Database\ConnectionResolverInterface $connectionResolver
-     * @param \Illuminate\Contracts\Events\Dispatcher $eventDispatcher
+     * @param  \Illuminate\Database\ConnectionResolverInterface  $connectionResolver
+     * @param  \Illuminate\Contracts\Events\Dispatcher  $eventDispatcher
      */
     public function __construct(ConnectionResolverInterface $connectionResolver, EventDispatcher $eventDispatcher)
     {
@@ -75,7 +75,7 @@ class TransactionalDispatcher
     /**
      * Flush all enqueued events.
      *
-     * @param \Illuminate\Database\ConnectionInterface  $connection
+     * @param  \Illuminate\Database\ConnectionInterface  $connection
      * @return void
      */
     public function commit(ConnectionInterface $connection)
@@ -111,7 +111,7 @@ class TransactionalDispatcher
     /**
      * Clear enqueued events.
      *
-     * @param \Illuminate\Database\ConnectionInterface  $connection
+     * @param  \Illuminate\Database\ConnectionInterface  $connection
      * @return void
      */
     public function rollback(ConnectionInterface $connection)
@@ -135,8 +135,8 @@ class TransactionalDispatcher
     /**
      * Check whether an event is a transactional event or not.
      *
-     * @param \Illuminate\Database\ConnectionInterface $connection
-     * @param string|object $event
+     * @param  \Illuminate\Database\ConnectionInterface  $connection
+     * @param  string|object $event
      * @return bool
      */
     private function isTransactionalEvent(ConnectionInterface $connection, $event)
@@ -151,7 +151,7 @@ class TransactionalDispatcher
     /**
      * Check whether an event should be handled by this layer or not.
      *
-     * @param string|object $event
+     * @param  string|object  $event
      * @return bool
      */
     private function shouldHandle($event)
