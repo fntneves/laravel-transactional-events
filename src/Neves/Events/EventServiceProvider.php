@@ -3,9 +3,9 @@
 namespace Neves\Events;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Database\Events\TransactionRolledBack;
+use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 
 class EventServiceProvider extends ServiceProvider
 {
