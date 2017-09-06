@@ -5,10 +5,10 @@ namespace Neves\Events;
 use Illuminate\Support\Str;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Events\Dispatcher as EventDispatcher;
-use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
+use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 
 class TransactionalDispatcher implements DispatcherContract
 {
@@ -283,7 +283,8 @@ class TransactionalDispatcher implements DispatcherContract
         return $this->dispatcher->$method(...$parameters);
     }
 
-    private function setUpListeners() {
+    private function setUpListeners()
+    {
         $this->dispatcher->listen(TransactionCommitted::class, function ($event) {
             $this->commit($event->connection);
         });
