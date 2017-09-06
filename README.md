@@ -1,7 +1,6 @@
 # Transaction-aware Event Dispatcher on Laravel <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
 
 This package introduces a transactional layer into Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency level to Laravel applications, on dispatched events within database transactions.
-<br>.
 
 ## Why transactional events?
 When applications increase on size, developers may end up dispatching events on models, for better organization. In fact, Laravel dispatches some events on Model creation, deletion and so on.
