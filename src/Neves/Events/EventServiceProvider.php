@@ -14,19 +14,28 @@ class EventServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (config('transactional-events.enable', true)) {
-            $this->app->extend('events', function () {
-                $dispatcher = new TransactionalDispatcher(
-                    $this->app->make('db'),
-                    $this->app->make(EventDispatcher::class)
-                );
+        $enable = config('transactional-events.enable', true);
+        $transactional = config('transactional-events.transactional');
+        $excluded = config('transactional-events.excluded', []);
 
-                $dispatcher->setTransactionalEvents(config('transactional-events.events', []));
-                $dispatcher->setExcludedEvents(config('transactional-events.exclude', []));
-
-                return $dispatcher;
-            });
+        if (! $enable) {
+            return;
         }
+
+        $this->app->extend('events', function () {
+            $dispatcher = new TransactionalDispatcher(
+                $this->app->make('db'),
+                $this->app->make(EventDispatcher::class)
+            );
+
+            if (is_array($transactional)) {
+                $dispatcher->setTransactionalEvents($transactional);
+            }
+
+            $dispatcher->setExcludedEvents($excluded);
+
+            return $dispatcher;
+        });
     }
 
     /**

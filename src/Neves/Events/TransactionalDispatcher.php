@@ -96,23 +96,23 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Set list of events that should be handled by transactional layer.
      *
-     * @param  array  $enabled
+     * @param  array|null  $transactional
      * @return void
      */
-    public function setTransactionalEvents(array $enabled)
+    public function setTransactionalEvents(array $transactional)
     {
-        $this->transactional = $enabled;
+        $this->transactional = $transactional;
     }
 
     /**
      * Set exceptions list.
      *
-     * @param  array  $except
+     * @param  array  $exclude
      * @return void
      */
-    public function setExcludedEvents(array $except)
+    public function setExcludedEvents(array $exclude = [])
     {
-        $this->exclude = array_merge(['Illuminate\Database\Events'], $except);
+        $this->exclude = array_merge(['Illuminate\Database\Events'], $exclude);
     }
 
     /**
@@ -153,14 +153,14 @@ class TransactionalDispatcher implements DispatcherContract
     {
         $event = is_string($event) ? $event : get_class($event);
 
-        foreach ($this->exclude as $exception) {
-            if ($this->matches($exception, $event)) {
+        foreach ($this->exclude as $excluded) {
+            if ($this->matches($excluded, $event)) {
                 return false;
             }
         }
 
-        foreach ($this->transactional as $enabled) {
-            if ($this->matches($enabled, $event)) {
+        foreach ($this->transactional as $transactionalEvent) {
+            if ($this->matches($transactionalEvent, $event)) {
                 return true;
             }
         }
