@@ -14,11 +14,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $enable = config('transactional-events.enable', true);
-        $transactional = config('transactional-events.transactional');
-        $excluded = config('transactional-events.excluded', []);
-
-        if (! $enable) {
+        if (! config('transactional-events.enable', true)) {
             return;
         }
 
@@ -28,11 +24,11 @@ class EventServiceProvider extends ServiceProvider
                 $this->app->make(EventDispatcher::class)
             );
 
-            if (is_array($transactional)) {
+            if (is_array($transactional = config('transactional-events.transactional'))) {
                 $dispatcher->setTransactionalEvents($transactional);
             }
 
-            $dispatcher->setExcludedEvents($excluded);
+            $dispatcher->setExcludedEvents(config('transactional-events.excluded', []));
 
             return $dispatcher;
         });
