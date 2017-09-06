@@ -4,6 +4,8 @@ namespace Neves\Events;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
+use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Database\Events\TransactionRolledBack;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -23,6 +25,14 @@ class EventServiceProvider extends ServiceProvider
 
                 $dispatcher->setTransactionalEvents(config('transactional-events.events', []));
                 $dispatcher->setExcludedEvents(config('transactional-events.exclude', []));
+
+                $dispatcher->listen(TransactionCommitted::class, function ($event) use ($dispatcher) {
+                    $dispatcher->commit($event->connection);
+                });
+
+                $dispatcher->listen(TransactionRolledBack::class, function ($event) use ($dispatcher) {
+                    $dispatcher->rollback($event->connection);
+                });
 
                 return $dispatcher;
             });
