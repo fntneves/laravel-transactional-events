@@ -201,6 +201,36 @@ class TransactionalDispatcherTest extends TestCase
         $this->assertEquals('bar', $_SERVER['__events.test']);
     }
 
+    /** @test */
+    public function it_dispatches_events_on_commit_event()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events.test'] = 'bar';
+        });
+
+        $this->setupTransactionLevel(1);
+        $this->dispatcher->dispatch('foo');
+        $this->dispatcher->dispatch(new \Illuminate\Database\Events\TransactionCommitted($this->getConnection()));
+
+        $this->assertFalse($this->hasCommitListeners());
+        $this->assertEquals('bar', $_SERVER['__events.test']);
+    }
+
+    /** @test */
+    public function it_forgets_events_on_rollback_event()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events.test'] = 'bar';
+        });
+
+        $this->setupTransactionLevel(1);
+        $this->dispatcher->dispatch('foo');
+        $this->dispatcher->dispatch(new \Illuminate\Database\Events\TransactionRolledBack($this->getConnection()));
+
+        $this->assertFalse($this->hasCommitListeners());
+        $this->assertArrayNotHasKey('__events.test', $_SERVER);
+    }
+
     private function hasCommitListeners()
     {
         $connectionId = spl_object_hash($this->connectionResolverMock->connection());
@@ -218,6 +248,8 @@ class TransactionalDispatcherTest extends TestCase
         $connection = m::mock(ConnectionInterface::class)
             ->shouldReceive('transactionLevel')
             ->andReturn($level)
+            ->shouldReceive('getName')
+            ->andReturn('dummy')
             ->mock();
 
         $this->connectionResolverMock = $this->connectionResolverMock

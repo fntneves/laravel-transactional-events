@@ -7,6 +7,8 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Database\Events\TransactionRolledBack;
 
 class TransactionalDispatcher implements DispatcherContract
 {
@@ -38,7 +40,9 @@ class TransactionalDispatcher implements DispatcherContract
      *
      * @var array
      */
-    private $exclude = [];
+    private $exclude = [
+        'Illuminate\Database\Events',
+    ];
 
     /**
      * Create a new transactional event dispatcher instance.
@@ -50,6 +54,7 @@ class TransactionalDispatcher implements DispatcherContract
     {
         $this->connectionResolver = $connectionResolver;
         $this->dispatcher = $eventDispatcher;
+        $this->setUpListeners();
     }
 
     /**
@@ -107,7 +112,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     public function setExcludedEvents(array $except)
     {
-        $this->exclude = $except;
+        $this->exclude = array_merge(['Illuminate\Database\Events'], $except);
     }
 
     /**
@@ -276,5 +281,15 @@ class TransactionalDispatcher implements DispatcherContract
     public function __call($method, $parameters)
     {
         return $this->dispatcher->$method(...$parameters);
+    }
+
+    private function setUpListeners() {
+        $this->dispatcher->listen(TransactionCommitted::class, function ($event) {
+            $this->commit($event->connection);
+        });
+
+        $this->dispatcher->listen(TransactionRolledBack::class, function ($event) {
+            $this->rollback($event->connection);
+        });
     }
 }
