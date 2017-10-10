@@ -77,7 +77,6 @@ class TransactionalDispatcher implements DispatcherContract
         $connection = $this->connectionResolver->connection();
         $connectionId = $connection->getName();
 
-
         if (! $this->isTransactionalEvent($connection, $event)) {
             return $this->dispatcher->dispatch($event, $payload, $halt);
         }
