@@ -44,6 +44,28 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
+    public function it_forgets_dispatched_events_after_transaction_commit()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = 'bar';
+        });
+        $this->dispatcher->listen('bar', function () {
+            $_SERVER['__events'] = 'zen';
+        });
+
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+            $this->dispatcher->dispatch('bar');
+        });
+
+        DB::transaction(function () {
+            unset($_SERVER['__events']);
+        });
+
+        $this->assertArrayNotHasKey('__events', $_SERVER);
+    }
+
+    /** @test */
     public function it_does_not_dispatch_events_after_nested_transaction_commit()
     {
         $this->dispatcher->listen('foo', function () {
