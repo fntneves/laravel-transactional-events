@@ -1,12 +1,7 @@
 <?php
 
-use Mockery as m;
 use Orchestra\Testbench\TestCase;
-use Illuminate\Events\Dispatcher;
 use Neves\Events\EventServiceProvider;
-use Neves\Events\TransactionalDispatcher;
-use Illuminate\Database\ConnectionInterface;
-use Illuminate\Database\ConnectionResolverInterface;
 
 class TransactionalDispatcherTest extends TestCase
 {
@@ -195,7 +190,7 @@ class TransactionalDispatcherTest extends TestCase
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
             'driver'   => 'sqlite',
-            'database' => ':memory:'
+            'database' => ':memory:',
         ]);
     }
 }
