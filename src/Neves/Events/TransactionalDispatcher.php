@@ -107,6 +107,8 @@ class TransactionalDispatcher implements DispatcherContract
                 $this->dispatcher->dispatch($event['event'], $event['payload']);
             }
         }
+
+        unset($this->pendingTransactionalEvents[$connectionId]);
     }
 
     /**

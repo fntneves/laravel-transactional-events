@@ -2,9 +2,6 @@
     "name": "fntneves/laravel-transactional-events",
     "description": "Transactional layer for Laravel Event Dispatcher",
     "type": "library",
-    "require": {
-        "illuminate/events": "5.5.*"
-    },
     "require-dev": {
         "orchestra/testbench": "~3.5",
         "friendsofphp/php-cs-fixer": "^2.7"
