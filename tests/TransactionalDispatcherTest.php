@@ -1,31 +1,23 @@
 <?php
 
 use Mockery as m;
-use PHPUnit\Framework\TestCase;
+use Orchestra\Testbench\TestCase;
 use Illuminate\Events\Dispatcher;
+use Neves\Events\EventServiceProvider;
 use Neves\Events\TransactionalDispatcher;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
 
 class TransactionalDispatcherTest extends TestCase
 {
-    protected $connectionResolverMock;
-
     protected $dispatcher;
-
-    public function tearDown()
-    {
-        m::close();
-    }
 
     public function setUp()
     {
-        unset($_SERVER['__events.test']);
-        unset($_SERVER['__events.test.bar']);
-        unset($_SERVER['__events.test.zen']);
+        parent::setUp();
+        unset($_SERVER['__events']);
 
-        $this->connectionResolverMock = m::mock(ConnectionResolverInterface::class);
-        $this->dispatcher = new TransactionalDispatcher($this->connectionResolverMock, new Dispatcher());
+        $this->dispatcher = $this->app['events'];
         $this->dispatcher->setTransactionalEvents(['*']);
     }
 
@@ -33,228 +25,177 @@ class TransactionalDispatcherTest extends TestCase
     public function it_immediately_dispatches_event_out_of_transactions()
     {
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
-        $this->setupTransactionLevel(0);
 
         $this->dispatcher->dispatch('foo');
 
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        $this->assertEquals('bar', $_SERVER['__events']);
     }
 
     /** @test */
-    public function it_enqueues_event_dispatched_in_transactions()
+    public function it_dispatches_events_only_after_transaction_commit()
     {
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
-        $this->setupTransactionLevel(1);
 
-        $this->dispatcher->dispatch('foo');
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
 
-        $this->assertTrue($this->hasCommitListeners());
-        $this->assertArrayNotHasKey('__events.test', $_SERVER);
+        $this->assertEquals('bar', $_SERVER['__events']);
     }
 
     /** @test */
-    public function it_dispatches_events_on_commit()
+    public function it_does_not_dispatch_events_after_nested_transaction_commit()
     {
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->dispatch('foo');
 
-        $this->dispatcher->commit($this->getConnection());
+        DB::transaction(function () {
+            DB::transaction(function () {
+                $this->dispatcher->dispatch('foo');
+            });
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
 
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        $this->assertEquals('bar', $_SERVER['__events']);
     }
 
     /** @test */
-    public function it_forgets_enqueued_events_on_rollback()
+    public function it_does_not_dispatch_events_after_nested_transaction_rollback()
     {
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->dispatch('foo');
 
-        $this->dispatcher->rollback($this->getConnection());
+        try {
+            DB::transaction(function () {
+                DB::transaction(function () {
+                    $this->dispatcher->dispatch('foo');
+                    throw new \Exception;
+                });
+            });
+        } catch (\Exception $e) {
+            //
+        }
 
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertArrayNotHasKey('__events.test', $_SERVER);
+        $this->assertArrayNotHasKey('__events', $_SERVER);
+    }
+
+    /** @test */
+    public function it_does_not_dispatch_events_after_outer_transaction_rollback()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = 'bar';
+        });
+
+        try {
+            DB::transaction(function () {
+                DB::transaction(function () {
+                    $this->dispatcher->dispatch('foo');
+                });
+                throw new \Exception;
+            });
+        } catch (\Exception $e) {
+            //
+        }
+
+        $this->assertArrayNotHasKey('__events', $_SERVER);
     }
 
     /** @test */
     public function it_immediately_dispatches_events_present_in_exceptions_list()
     {
+        $this->dispatcher->setExcludedEvents(['foo']);
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
 
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->setExcludedEvents(['foo']);
-        $this->dispatcher->dispatch('foo');
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+            $this->assertEquals('bar', $_SERVER['__events']);
+        });
     }
 
     /** @test */
     public function it_immediately_dispatches_events_not_present_in_enabled_list()
     {
+        $this->dispatcher->setTransactionalEvents(['bar']);
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
 
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->setTransactionalEvents(['bar']);
-        $this->dispatcher->dispatch('foo');
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+            $this->assertEquals('bar', $_SERVER['__events']);
+        });
     }
 
     /** @test */
     public function it_immediately_dispatches_events_that_do_not_match_a_pattern()
     {
+        $this->dispatcher->setTransactionalEvents(['foo/*']);
         $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
 
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->setTransactionalEvents(['foo/*']);
-        $this->dispatcher->dispatch('foo');
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+            $this->assertEquals('bar', $_SERVER['__events']);
+        });
     }
 
     /** @test */
     public function it_enqueues_events_that_do_match_a_pattern()
     {
+        $this->dispatcher->setTransactionalEvents(['foo/*']);
         $this->dispatcher->listen('foo/bar', function () {
-            $_SERVER['__events.test'] = 'bar';
+            $_SERVER['__events'] = 'bar';
         });
 
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->setTransactionalEvents(['foo/*']);
-        $this->dispatcher->dispatch('foo/bar');
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo/bar');
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
 
-        $this->assertTrue($this->hasCommitListeners());
-        $this->assertArrayNotHasKey('__events.test', $_SERVER);
+        $this->assertEquals('bar', $_SERVER['__events']);
     }
 
     /** @test */
     public function it_immediately_dispatches_specific_events_excluded_on_a_pattern()
     {
-        $this->dispatcher->listen('foo/bar', function () {
-            $_SERVER['__events.test.bar'] = 'bar';
-        });
-
-        $this->dispatcher->listen('foo/zen', function () {
-            $_SERVER['__events.test.zen'] = 'zen';
-        });
-
-        $this->setupTransactionLevel(1);
         $this->dispatcher->setTransactionalEvents(['foo/*']);
         $this->dispatcher->setExcludedEvents(['foo/bar']);
-        $this->dispatcher->dispatch('foo/bar');
-        $this->dispatcher->dispatch('foo/zen');
-
-        $this->assertTrue($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test.bar']);
-        $this->assertArrayNotHasKey('__env.test.zen', $_SERVER);
-    }
-
-    /** @test */
-    public function it_enqueues_events_matching_a_namespace_patterns()
-    {
-        $event = m::mock('\\Neves\\Event');
-        $this->dispatcher->listen('\\Neves\\Event', function () {
-            $_SERVER['__events.test'] = 'bar';
+        $this->dispatcher->listen('foo/bar', function () {
+            $_SERVER['__events.bar'] = 'bar';
+        });
+        $this->dispatcher->listen('foo/zen', function () {
+            $_SERVER['__events.zen'] = 'zen';
         });
 
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->dispatch($event);
-
-        $this->assertTrue($this->hasCommitListeners());
-        $this->assertArrayNotHasKey('__events.test', $_SERVER);
-    }
-
-    /** @test */
-    public function it_dispatches_events_matching_a_namespace_patterns()
-    {
-        $event = m::mock('overload:\\App\\Neves\\Event');
-        $this->dispatcher->listen(get_class($event), function () {
-            $_SERVER['__events.test'] = 'bar';
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo/bar');
+            $this->dispatcher->dispatch('foo/zen');
+            $this->assertEquals('bar', $_SERVER['__events.bar']);
+            $this->assertArrayNotHasKey('__env.test.zen', $_SERVER);
         });
-
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->setTransactionalEvents(['App\*']);
-        $this->dispatcher->dispatch($event);
-        $this->dispatcher->commit($this->getConnection());
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
     }
 
-    /** @test */
-    public function it_dispatches_events_on_commit_event()
+    protected function getPackageProviders($app)
     {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
-        });
-
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->dispatch('foo');
-        $this->dispatcher->dispatch(new \Illuminate\Database\Events\TransactionCommitted($this->getConnection()));
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertEquals('bar', $_SERVER['__events.test']);
+        return [EventServiceProvider::class];
     }
 
-    /** @test */
-    public function it_forgets_events_on_rollback_event()
+    protected function getEnvironmentSetUp($app)
     {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events.test'] = 'bar';
-        });
-
-        $this->setupTransactionLevel(1);
-        $this->dispatcher->dispatch('foo');
-        $this->dispatcher->dispatch(new \Illuminate\Database\Events\TransactionRolledBack($this->getConnection()));
-
-        $this->assertFalse($this->hasCommitListeners());
-        $this->assertArrayNotHasKey('__events.test', $_SERVER);
-    }
-
-    private function hasCommitListeners()
-    {
-        $connectionId = spl_object_hash($this->connectionResolverMock->connection());
-
-        return $this->dispatcher->hasListeners($connectionId.'_commit');
-    }
-
-    private function getConnection()
-    {
-        return $this->connectionResolverMock->connection();
-    }
-
-    private function setupTransactionLevel($level = 1)
-    {
-        $connection = m::mock(ConnectionInterface::class)
-            ->shouldReceive('transactionLevel')
-            ->andReturn($level)
-            ->shouldReceive('getName')
-            ->andReturn('dummy')
-            ->mock();
-
-        $this->connectionResolverMock = $this->connectionResolverMock
-            ->shouldReceive('connection')
-            ->andReturn($connection)
-            ->mock();
+        $app['config']->set('database.default', 'testbench');
+        $app['config']->set('database.connections.testbench', [
+            'driver'   => 'sqlite',
+            'database' => ':memory:'
+        ]);
     }
 }

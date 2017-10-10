@@ -3,13 +3,11 @@
     "description": "Transactional layer for Laravel Event Dispatcher",
     "type": "library",
     "require": {
-        "illuminate/events": "5.5.*",
-        "illuminate/support": "5.5.*",
-        "illuminate/database": "5.5.*"
+        "illuminate/events": "5.5.*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^6.3",
-        "mockery/mockery": "^0.9.9"
+        "orchestra/testbench": "~3.5",
+        "friendsofphp/php-cs-fixer": "^2.7"
     },
     "license": "MIT",
     "authors": [
