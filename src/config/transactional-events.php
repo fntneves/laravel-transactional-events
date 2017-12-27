@@ -16,11 +16,11 @@ return [
 
     'enable' => true,
 
-    'events' => [
+    'transactional' => [
         'App\Events',
     ],
 
-    'exclude' => [
+    'excluded' => [
         //
     ],
 ];
