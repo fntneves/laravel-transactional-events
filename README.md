@@ -67,7 +67,7 @@ The following keys are present in the configuration file:
 
 The transactional behavior of events can be enabled or disabled by changing the following property:
 ```php
-'enabled' => true
+'enable' => true
 ```
 
 By default, the transactional behavior will be applied to events on `App\Events` namespace. Feel free to use patterns and namespaces.
@@ -79,7 +79,7 @@ By default, the transactional behavior will be applied to events on `App\Events`
 Choose specific events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher:
 
 ```php
-'exclude' => ['App\Events\DeletingAccount']
+'excluded' => ['App\Events\DeletingAccount']
 ```
 
 ## License
