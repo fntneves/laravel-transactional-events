@@ -73,7 +73,7 @@ The transactional behavior of events can be enabled or disabled by changing the 
 By default, the transactional behavior will be applied to events on `App\Events` namespace. Feel free to use patterns and namespaces.
 
 ```php
-'events' => ['App\Events']
+'transactional' => ['App\Events']
 ```
 
 Choose specific events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher:
