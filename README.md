@@ -27,7 +27,7 @@ A failure will result in a discard of all database changes within the transactio
 
 The purpose of this package is to ensure that events are dispatched **if and only if** the transaction in which they were dispatched commits. According to the example, if the transaction fails, then the custom event is not actually executed at all.
 
-Note that in situations where events are dispatched out of transactions, they will bypass the transactional layer, i.e. fallback to the default Event Dispatcher. This is true also fot events that where the `$halt` parameter is set to `true`.
+Note that in situations where events are dispatched out of transactions, they will bypass the transactional layer, i.e. fallback to the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
 
 ## Installation
 
