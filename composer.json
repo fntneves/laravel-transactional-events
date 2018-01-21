@@ -3,7 +3,7 @@
     "description": "Transactional layer for Laravel Event Dispatcher",
     "type": "library",
     "require-dev": {
-        "orchestra/testbench": "~3.5",
+        "orchestra/testbench": "~3.5"
     },
     "license": "MIT",
     "authors": [
