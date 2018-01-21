@@ -29,6 +29,7 @@ class EventServiceProvider extends ServiceProvider
             $dispatcher = new TransactionalDispatcher($connectionResolver, $eventDispatcher);
             $dispatcher->setTransactionalEvents($this->app['config']->get('transactional-events.transactional'));
             $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded'));
+
             return $dispatcher;
         });
     }

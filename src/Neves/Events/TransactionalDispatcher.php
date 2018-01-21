@@ -5,8 +5,8 @@ namespace Neves\Events;
 use Illuminate\Support\Str;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\ConnectionResolverInterface;
-use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Database\Events\TransactionBeginning;
+use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
@@ -81,7 +81,7 @@ class TransactionalDispatcher implements DispatcherContract
         // If halt is specified, then automatically dispatches the event
         // to the original dispatcher. This happens because the caller
         // is waiting for the result of the listeners of this event.
-        if ($halt || !$this->isTransactionalEvent($connection, $event)) {
+        if ($halt || ! $this->isTransactionalEvent($connection, $event)) {
             return $this->dispatcher->dispatch($event, $payload, $halt);
         }
 
@@ -121,7 +121,7 @@ class TransactionalDispatcher implements DispatcherContract
 
         // Now we prepare a new array level for this transaction in the current
         // transaction level. It allows nested transactions to rollback and
-        // their events discarded without affecting previous transactions. 
+        // their events discarded without affecting previous transactions.
         $this->pendingEvents[$connectionId][$transactionLevel][] = [];
     }
 

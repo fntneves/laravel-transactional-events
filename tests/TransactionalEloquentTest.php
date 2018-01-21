@@ -2,7 +2,6 @@
 
 use Orchestra\Testbench\TestCase;
 use Neves\Events\EventServiceProvider;
-use Neves\Events\TransactionalDispatcher;
 
 class TransactionalEloquentTest extends TestCase
 {

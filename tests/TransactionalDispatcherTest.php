@@ -85,7 +85,7 @@ class TransactionalDispatcherTest extends TestCase
             DB::transaction(function () {
                 $this->dispatcher->dispatch('foo');
             });
-            
+
             try {
                 DB::transaction(function () {
                     $this->dispatcher->dispatch('foo');
