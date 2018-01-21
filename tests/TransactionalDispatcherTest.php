@@ -2,6 +2,7 @@
 
 use Orchestra\Testbench\TestCase;
 use Neves\Events\EventServiceProvider;
+use Neves\Events\TransactionalDispatcher;
 
 class TransactionalDispatcherTest extends TestCase
 {
@@ -10,10 +11,17 @@ class TransactionalDispatcherTest extends TestCase
     public function setUp()
     {
         parent::setUp();
+
         unset($_SERVER['__events']);
 
         $this->dispatcher = $this->app['events'];
         $this->dispatcher->setTransactionalEvents(['*']);
+    }
+
+    /** @test */
+    public function it_is_enabled_by_default()
+    {
+        $this->assertEquals(TransactionalDispatcher::class, get_class($this->dispatcher));
     }
 
     /** @test */
@@ -29,7 +37,7 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_dispatches_events_only_after_transaction_commit()
+    public function it_dispatches_events_only_after_transaction_commits()
     {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__events'] = 'bar';
@@ -44,7 +52,7 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_forgets_dispatched_events_after_transaction_commit()
+    public function it_forgets_dispatched_events_after_transaction_commits()
     {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__events'] = 'bar';
@@ -66,7 +74,33 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_dispatch_events_after_nested_transaction_commit()
+    public function it_does_not_forget_dispatched_events_on_the_same_transaction_level_after_a_rollback()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = $_SERVER['__events'] ?? 0;
+            $_SERVER['__events']++;
+        });
+
+        DB::transaction(function () {
+            DB::transaction(function () {
+                $this->dispatcher->dispatch('foo');
+            });
+            
+            try {
+                DB::transaction(function () {
+                    $this->dispatcher->dispatch('foo');
+                    throw new \Exception;
+                });
+            } catch (\Exception $e) {
+                //
+            }
+        });
+
+        $this->assertEquals(1, $_SERVER['__events']);
+    }
+
+    /** @test */
+    public function it_does_not_dispatch_events_after_nested_transaction_commits()
     {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__events'] = 'bar';
@@ -83,7 +117,7 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_dispatch_events_after_nested_transaction_rollback()
+    public function it_does_not_dispatch_events_after_nested_transaction_rollbacks()
     {
         $this->dispatcher->listen('foo', function () {
             $_SERVER['__events'] = 'bar';

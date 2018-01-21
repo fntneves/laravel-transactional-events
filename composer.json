@@ -4,7 +4,6 @@
     "type": "library",
     "require-dev": {
         "orchestra/testbench": "~3.5",
-        "friendsofphp/php-cs-fixer": "^2.7"
     },
     "license": "MIT",
     "authors": [

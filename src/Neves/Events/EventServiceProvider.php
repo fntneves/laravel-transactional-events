@@ -14,7 +14,12 @@ class EventServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (! $this->app['config']->get('transactional-events.enable', true)) {
+        $this->mergeConfigFrom(
+            __DIR__.'/../../config/transactional-events.php',
+            'transactional-events'
+        );
+
+        if (! $this->app['config']->get('transactional-events.enable')) {
             return;
         }
 
@@ -22,13 +27,8 @@ class EventServiceProvider extends ServiceProvider
         $eventDispatcher = $this->app->make(EventDispatcher::class);
         $this->app->extend('events', function () use ($connectionResolver, $eventDispatcher) {
             $dispatcher = new TransactionalDispatcher($connectionResolver, $eventDispatcher);
-
-            if (is_array($transactional = $this->app['config']->get('transactional-events.transactional'))) {
-                $dispatcher->setTransactionalEvents($transactional);
-            }
-
-            $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded', []));
-
+            $dispatcher->setTransactionalEvents($this->app['config']->get('transactional-events.transactional'));
+            $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded'));
             return $dispatcher;
         });
     }
@@ -43,10 +43,5 @@ class EventServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../../config/transactional-events.php' => config_path('transactional-events.php'),
         ]);
-
-        $this->mergeConfigFrom(
-            __DIR__.'/../../config/transactional-events.php',
-            'transactional-events'
-        );
     }
 }
