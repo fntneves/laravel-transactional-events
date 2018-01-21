@@ -5,7 +5,7 @@
 
 > This package is only available for Laravel 5.5 LTS.
 
-This package introduces a transactional layer to Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions.
+This package introduces a transactional layer to Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`, by changing the configuration file.
 
 ## Why transactional events?
 
@@ -27,7 +27,7 @@ A failure will result in a discard of all database changes within the transactio
 
 The purpose of this package is to ensure that events are dispatched **if and only if** the transaction in which they were dispatched commits. According to the example, if the transaction fails, then the custom event is not actually executed at all.
 
-Note that in situations where events are dispatched out of transactions, they will bypass the transactional layer, i.e. fallback to the default Event Dispatcher.
+Note that in situations where events are dispatched out of transactions, they will bypass the transactional layer, i.e. fallback to the default Event Dispatcher. This is true also fot events that where the `$halt` parameter is set to `true`.
 
 ## Installation
 
@@ -76,10 +76,20 @@ By default, the transactional behavior will be applied to events on `App\Events`
 'transactional' => ['App\Events']
 ```
 
-Choose specific events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher:
+Choose specific events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher. By default, all `*ed` Eloquent events are excluded.
 
 ```php
-'excluded' => ['App\Events\DeletingAccount']
+'excluded' => [
+    // 'eloquent.*',
+    'eloquent.booted',
+    'eloquent.retrieved',
+    'eloquent.created',
+    'eloquent.saved',
+    'eloquent.updated',
+    'eloquent.created',
+    'eloquent.deleted',
+    'eloquent.restored',
+],
 ```
 
 ## License
