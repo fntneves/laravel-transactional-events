@@ -48,12 +48,31 @@ php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
 
 The transactional layer is enabled by default for the events under the `App\Events` namespace.
 
+However, the easiest way to enable transactional behavior on your events is to implement the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
+*Note that events that implement it will become transactional even when excluded in config.*
+
+```php
+namespace App\Events;
+
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Foundation\Events\Dispatchable;
+...
+use Neves\Events\Contracts\TransactionalEvent;
+
+class TicketsOrdered implements TransactionalEvent
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    ...
+}
+```
+
 As this package does not require any change in code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
 
 ```php
-Event::dispatch(new App\Event\CustomEvent) // Using Event facade
-event(new App\Event\CustomEvent) // Using event() helper method
-broadcast(new App\Event\CustomEvent) // Using broadcast() helper method
+Event::dispatch(new App\Event\TicketsOrdered) // Using Event facade
+event(new App\Event\TicketsOrdered) // Using event() helper method
+broadcast(new App\Event\TicketsOrdered) // Using broadcast() helper method
 ```
 
 Even if you use queues, they just still work because this package does not change the core behavior of the event dispatcher. Just take in account that they will be enqueued as soon as the active transaction succeeds. Otherwise, they will be forgotten.
@@ -90,25 +109,6 @@ Choose specific events that should always bypass the transactional layer, i.e., 
     'eloquent.deleted',
     'eloquent.restored',
 ],
-```
-
-An easier way is to implement the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
-*Note that events that implement it will become transactional, overriding the `excluded` config.*
-
-```php
-namespace App\Events;
-
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
-...
-use Neves\Events\Contracts\TransactionalEvent;
-
-class TicketsOrdered implements TransactionalEvent
-{
-    use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    ...
-}
 ```
 
 ## License
