@@ -4,13 +4,13 @@ namespace Neves\Events;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\ConnectionInterface;
+use Neves\Events\Contracts\TransactionalEvent;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
-use Neves\Events\Contracts\TransactionalEvent;
 
 class TransactionalDispatcher implements DispatcherContract
 {
@@ -228,7 +228,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     private function shouldHandle($event)
     {
-        if($event instanceof TransactionalEvent) {
+        if ($event instanceof TransactionalEvent) {
             return true;
         }
 

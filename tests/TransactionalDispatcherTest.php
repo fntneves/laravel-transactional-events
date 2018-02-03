@@ -268,6 +268,7 @@ class TransactionalDispatcherTest extends TestCase
     }
 }
 
-class CustomEvent implements TransactionalEvent {
+class CustomEvent implements TransactionalEvent
+{
     //
 }
