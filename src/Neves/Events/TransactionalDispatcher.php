@@ -10,6 +10,7 @@ use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+use Neves\Events\Contracts\TransactionalEvent;
 
 class TransactionalDispatcher implements DispatcherContract
 {
@@ -227,6 +228,10 @@ class TransactionalDispatcher implements DispatcherContract
      */
     private function shouldHandle($event)
     {
+        if($event instanceof TransactionalEvent) {
+            return true;
+        }
+
         $event = is_string($event) ? $event : get_class($event);
 
         foreach ($this->excluded as $excluded) {

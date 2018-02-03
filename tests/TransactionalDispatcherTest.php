@@ -3,6 +3,7 @@
 use Orchestra\Testbench\TestCase;
 use Neves\Events\EventServiceProvider;
 use Neves\Events\TransactionalDispatcher;
+use Neves\Events\Contracts\TransactionalEvent;
 
 class TransactionalDispatcherTest extends TestCase
 {
@@ -45,6 +46,22 @@ class TransactionalDispatcherTest extends TestCase
 
         DB::transaction(function () {
             $this->dispatcher->dispatch('foo');
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
+
+        $this->assertEquals('bar', $_SERVER['__events']);
+    }
+
+    /** @test */
+    public function it_handles_events_that_implement_the_transactional_contract_without_explicit_configuration()
+    {
+        $this->dispatcher->setTransactionalEvents(['foo/']);
+        $this->dispatcher->listen(CustomEvent::class, function () {
+            $_SERVER['__events'] = 'bar';
+        });
+
+        DB::transaction(function () {
+            $this->dispatcher->dispatch(new CustomEvent());
             $this->assertArrayNotHasKey('__events', $_SERVER);
         });
 
@@ -201,7 +218,7 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_enqueues_events_that_do_match_a_pattern()
+    public function it_enqueues_events_that_do_match_an_pattern()
     {
         $this->dispatcher->setTransactionalEvents(['foo/*']);
         $this->dispatcher->listen('foo/bar', function () {
@@ -249,4 +266,8 @@ class TransactionalDispatcherTest extends TestCase
             'database' => ':memory:',
         ]);
     }
+}
+
+class CustomEvent implements TransactionalEvent {
+    //
 }
