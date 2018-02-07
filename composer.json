@@ -2,9 +2,6 @@
     "name": "fntneves/laravel-transactional-events",
     "description": "Transactional layer for Laravel Event Dispatcher",
     "type": "library",
-    "require-dev": {
-        "orchestra/testbench": "~3.5"
-    },
     "license": "MIT",
     "authors": [
         {
@@ -23,5 +20,7 @@
                 "Neves\\Events\\EventServiceProvider"
             ]
         }
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
 }
