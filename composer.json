@@ -13,10 +13,6 @@
         {
             "name": "Francisco Neves",
             "email": "hi@francisconeves.me"
-        },
-        {
-            "name": "Szabolcs (Szasza) Palmer",
-            "email": "szasza@szasza.info"
         }
     ],
     "autoload": {
