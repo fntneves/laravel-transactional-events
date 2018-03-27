@@ -77,7 +77,6 @@ class TransactionalDispatcher implements DispatcherContract
     public function dispatch($event, $payload = [], $halt = false)
     {
         $connection = $this->connectionResolver->connection();
-        $connectionId = $connection->getName();
 
         // If halt is specified, then automatically dispatches the event
         // to the original dispatcher. This happens because the caller
