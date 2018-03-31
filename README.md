@@ -1,11 +1,18 @@
-# Transaction-aware Event Dispatcher for Laravel, and Lumen
+# Transaction-aware Event Dispatcher for Laravel (and Lumen)
 
 <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
 <a href="https://packagist.org/packages/fntneves/laravel-transactional-events"><img src="https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable" alt="Latest Stable Version"></a>
 
-This package introduces a transactional layer to Laravel/Lumen Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`, by changing the configuration file.
+This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`, by changing the configuration file.
 
-## Why transactional events?
+* [Introduction](#why-transactional-events)
+* [Installation](#installation)
+    * [Laravel](#laravel) (5.5+)
+    * [Lumen](#lumen) (5.5+)
+* [Usage](#usage)
+* [Configuration](#configuration)
+
+## Introduction - Why transactional events?
 
 Let's start with an example representing a simple process of ordering tickets. Assume this involves database changes and a payment registration. A custom event is dispatched when the order is processed in the database.
 
@@ -13,38 +20,70 @@ Let's start with an example representing a simple process of ordering tickets. A
 DB::transaction(function() {
     $user = User::find(...);
     $concert = Concert::find(...);
-    $tickets = $concert->orderTickets($user, 3);
-    event(OrderWasProcessed::class);
+    $order = $concert->orderTickets($user, 3);
+    event(new OrderWasProcessed($order));
     PaymentService::registerOrder($tickets);
 });
 ```
 
-The transaction of the above example may fail at several points due to several reasons. It may fail while executing the `orderTickets` method or registering the order in the payment service or just simply due to a deadlock.
+The transaction in the above example may fail for several reasons. For instance, it may fail in the `orderTickets` method or in the payment service or just simply due to a deadlock.
 
-A failure will result in a discard of all database changes within the transaction, i.e. a rollback. However, the `OrderWasProcessed` event is actually dispatched and eventually will be executed.
+A failure will rollback database changes made during the transactionk. However, the `OrderWasProcessed` event is actually dispatched and eventually will be executed.
 
-The purpose of this package is to ensure that events are dispatched **if and only if** the transaction in which they were dispatched commits. According to the example, if the transaction fails, then the custom event is not actually executed at all.
+The purpose of this package is to ensure that events are dispatched **if and only if** the transaction in which they were dispatched commits. According to the example, this package guarantees that the `OrderWasProcessed` event is not dispatched if the transaction does not commit.
 
-Note that in situations where events are dispatched out of transactions, they will bypass the transactional layer, i.e. fallback to the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
+However, when events are dispatched out of transactions, they will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
 
 ## Installation
 
-The installation of this package is automatic when the _Package Auto-Discovery_ feature of Laravel 5.5 is leveraged. Just add this package to the `composer.json` file and it will be ready for your application.
+* [Laravel](#laravel) (5.5+)
+* [Lumen](#lumen) (5.5+)
+
+### Laravel (5.5+)
+The installation of this package in Laravel is automatic thanks to the _Package Auto-Discovery_ feature of Laravel 5.5.
+Just add this package to the `composer.json` file and it will be ready for your application.
 
 ```
 composer require fntneves/laravel-transactional-events
 ```
 
-A configuration file is also part of this package. To customize it, run the following command that publishes the provided configuration file `transactional-events.php` to your config folder.
+A configuration file is also part of this package. Run the following command to copy the provided configuration file `transactional-events.php` to your `config` folder.
 
 ```
 php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
 ```
 
+### Lumen (5.5+)
+
+As Lumen is built on top of Laravel packages, this package should also work smoothly on this micro-web framework.
+Run the following command to install this package:
+
+``` bash
+composer require fntneves/laravel-transactional-events
+```
+
+In order to configure the behavior of this package, copy the configuration files:
+
+```bash
+cp vendor/fntneves/laravel-transactional-events/src/config/transactional-events.php config/transactional-events.php
+```
+
+Then, in `bootstrap/app.php`, register the configuration and the service provider:<br/>
+*Note:* This package must be registered _after_ the default EventServiceProvider, so your event listeners are not overriden. 
+
+```php
+// The default EventServiceProvider must be registered before.
+$app->register(App\Providers\EventServiceProvider::class);
+
+...
+
+$app->configure('transactional-events');
+$app->register(Neves\Events\EventServiceProvider::class);
+```
 
 ## Usage
 
-The transactional layer is enabled by default for the events under the `App\Events` namespace.
+The transactional layer is enabled by default for the events placed under the `App\Events` namespace.
 
 However, the easiest way to enable transactional behavior on your events is to implement the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
 *Note that events that implement it will become transactional even when excluded in config.*
@@ -65,7 +104,7 @@ class TicketsOrdered implements TransactionalEvent
 }
 ```
 
-As this package does not require any change in code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
+As this package does not require any changes in code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
 
 ```php
 Event::dispatch(new App\Event\TicketsOrdered) // Using Event facade
@@ -73,9 +112,9 @@ event(new App\Event\TicketsOrdered) // Using event() helper method
 broadcast(new App\Event\TicketsOrdered) // Using broadcast() helper method
 ```
 
-Even if you use queues, they just still work because this package does not change the core behavior of the event dispatcher. Just take in account that they will be enqueued as soon as the active transaction succeeds. Otherwise, they will be forgotten.
+Even if you are using queues, they will still work because this package does not change the core behavior of the event dispatcher. However, they will be enqueued as soon as the active transaction succeeds. Otherwise, they will be discarded.
 
-**Reminder:** Events are handled as transactional when they are dispatched within transactions. When an event is dispatched out of transactions, they bypass the transactional layer.
+**Reminder:** Events are considered as transactional when they are dispatched within transactions. When an event is dispatched out of transactions, they bypass the transactional layer.
 
 
 ## Configuration
