@@ -47,6 +47,13 @@ class TransactionalDispatcher implements DispatcherContract
     ];
 
     /**
+     * The current transaction level.
+     *
+     * @var array
+     */
+    private $transactionLevel = 0;
+
+    /**
      * The current pending events per transaction level of connections.
      *
      * @var array
@@ -97,11 +104,12 @@ class TransactionalDispatcher implements DispatcherContract
     public function commit(ConnectionInterface $connection)
     {
         $connectionId = $connection->getName();
+        $this->transactionLevel--;
 
         // Now prevent events to be dispatched when nested transactions are
         // committed, so no intermediate state is considered actual saved.
         // We dispatch events only after the outer transaction commits.
-        if ($connection->transactionLevel() > 0 || ! isset($this->pendingEvents[$connectionId])) {
+        if ($this->transactionLevel > 0 || ! isset($this->pendingEvents[$connectionId])) {
             return;
         }
 
@@ -117,12 +125,12 @@ class TransactionalDispatcher implements DispatcherContract
     protected function prepareTransaction($connection)
     {
         $connectionId = $connection->getName();
-        $transactionLevel = $connection->transactionLevel();
+        $this->transactionLevel++;
 
         // Now we prepare a new array level for this transaction in the current
         // transaction level. It allows nested transactions to rollback and
         // their events discarded without affecting previous transactions.
-        $this->pendingEvents[$connectionId][$transactionLevel][] = [];
+        $this->pendingEvents[$connectionId][$this->transactionLevel][] = [];
     }
 
     /**
@@ -136,7 +144,7 @@ class TransactionalDispatcher implements DispatcherContract
     protected function addPendingEvent($connection, $event, $payload)
     {
         $connectionId = $connection->getName();
-        $transactionLevel = $connection->transactionLevel();
+        $transactionLevel = $this->transactionLevel;
 
         $eventData = compact('event', 'payload');
         $transactionLevelEvents = &$this->pendingEvents[$connectionId][$transactionLevel];
@@ -172,13 +180,15 @@ class TransactionalDispatcher implements DispatcherContract
     public function rollback(ConnectionInterface $connection)
     {
         $connectionId = $connection->getName();
-        $transactionLevel = $connection->transactionLevel() + 1;
+        $transactionLevel = $this->transactionLevel;
 
         if ($transactionLevel > 1) {
             array_pop($this->pendingEvents[$connectionId][$transactionLevel]);
         } else {
             unset($this->pendingEvents[$connectionId]);
         }
+
+        $this->transactionLevel--;
     }
 
     /**
