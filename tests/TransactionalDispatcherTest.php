@@ -26,6 +26,15 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
+    public function it_does_not_override_previous_dispatcher_instance()
+    {
+        // Trigger listeners of a previous registered event.
+        $this->dispatcher->dispatch('previous_bound_event');
+
+        $this->assertEquals('OK', $_SERVER['__previous_listener']);
+    }
+
+    /** @test */
     public function it_immediately_dispatches_event_out_of_transactions()
     {
         $this->dispatcher->listen('foo', function () {
@@ -255,6 +264,11 @@ class TransactionalDispatcherTest extends TestCase
 
     protected function getPackageProviders($app)
     {
+        // Add an event listener to the previous event dispatcher.
+        $app['events']->listen('previous_bound_event', function () {
+            $_SERVER['__previous_listener'] = 'OK';
+        });
+
         return [EventServiceProvider::class];
     }
 
