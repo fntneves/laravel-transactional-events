@@ -104,11 +104,11 @@ class TransactionalDispatcher implements DispatcherContract
     public function commit(ConnectionInterface $connection)
     {
         $connectionId = $connection->getName();
-        $this->transactionLevel--;
 
-        // Now prevent events to be dispatched when nested transactions are
-        // committed, so no intermediate state is considered actual saved.
-        // We dispatch events only after the outer transaction commits.
+        // We decrement the transaction level and prevent events to be dispatched
+        // while comitting nested transactions, so no transient state is saved.
+        // Only dispatch events right after the outer transaction commits.
+        $this->transactionLevel--;
         if ($this->transactionLevel > 0 || ! isset($this->pendingEvents[$connectionId])) {
             return;
         }
@@ -125,7 +125,7 @@ class TransactionalDispatcher implements DispatcherContract
     protected function prepareTransaction($connection)
     {
         $connectionId = $connection->getName();
-        $this->transactionLevel++;
+        $this->transactionLevel = $this->transactionLevel > 0 ? $this->transactionLevel + 1 : 1;
 
         // Now we prepare a new array level for this transaction in the current
         // transaction level. It allows nested transactions to rollback and
@@ -180,10 +180,9 @@ class TransactionalDispatcher implements DispatcherContract
     public function rollback(ConnectionInterface $connection)
     {
         $connectionId = $connection->getName();
-        $transactionLevel = $this->transactionLevel;
 
-        if ($transactionLevel > 1) {
-            array_pop($this->pendingEvents[$connectionId][$transactionLevel]);
+        if ($this->transactionLevel > 1) {
+            array_pop($this->pendingEvents[$connectionId][$this->transactionLevel]);
         } else {
             unset($this->pendingEvents[$connectionId]);
         }
@@ -222,7 +221,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     private function isTransactionalEvent(ConnectionInterface $connection, $event)
     {
-        if ($connection->transactionLevel() > 0) {
+        if ($this->transactionLevel > 0) {
             return $this->shouldHandle($event);
         }
 
