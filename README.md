@@ -150,7 +150,8 @@ Choose specific events that should always bypass the transactional layer, i.e., 
 
 ## Known issues
 
-- Events are not dispatched when tests use transactions to reset database: https://github.com/laravel/ideas/issues/1094
+> Events are not dispatched when tests use transactions to reset database.
+It is related to the dispatched events related to transactions. I introduced an issue in Laravel internals (https://github.com/laravel/ideas/issues/1094) to discuss the possibility to disable transaction events, so they do not interfer with the application. For now, you can use the following solution: https://gist.github.com/fntneves/7f0b99767fce369919211148942eb297
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
