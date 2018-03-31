@@ -12,7 +12,7 @@ This package introduces a transactional layer to the Laravel Event Dispatcher. I
 * [Usage](#usage)
 * [Configuration](#configuration)
 
-## Introduction - Why transactional events?
+## Introduction
 
 Let's start with an example representing a simple process of ordering tickets. Assume this involves database changes and a payment registration. A custom event is dispatched when the order is processed in the database.
 
@@ -39,7 +39,7 @@ However, when events are dispatched out of transactions, they will bypass the tr
 * [Laravel](#laravel) (5.5+)
 * [Lumen](#lumen) (5.5+)
 
-### Laravel (5.5+)
+### Laravel
 The installation of this package in Laravel is automatic thanks to the _Package Auto-Discovery_ feature of Laravel 5.5.
 Just add this package to the `composer.json` file and it will be ready for your application.
 
@@ -53,7 +53,7 @@ A configuration file is also part of this package. Run the following command to 
 php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
 ```
 
-### Lumen (5.5+)
+### Lumen
 
 As Lumen is built on top of Laravel packages, this package should also work smoothly on this micro-web framework.
 Run the following command to install this package:
