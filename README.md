@@ -5,7 +5,7 @@
 
 This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`, by changing the configuration file.
 
-* [Introduction](#why-transactional-events)
+* [Introduction](#introduction)
 * [Installation](#installation)
     * [Laravel](#laravel) (5.5+)
     * [Lumen](#lumen) (5.5+)
@@ -22,7 +22,7 @@ DB::transaction(function() {
     $concert = Concert::find(...);
     $order = $concert->orderTickets($user, 3);
     event(new OrderWasProcessed($order));
-    PaymentService::registerOrder($tickets);
+    PaymentService::registerOrder($order);
 });
 ```
 
