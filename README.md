@@ -148,5 +148,9 @@ Choose specific events that should always bypass the transactional layer, i.e., 
 ],
 ```
 
+## Known issues
+
+- Events are not dispatched when tests use transactions to reset database: https://github.com/laravel/ideas/issues/1094
+
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
