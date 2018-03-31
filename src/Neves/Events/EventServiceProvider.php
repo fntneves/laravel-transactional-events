@@ -41,7 +41,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $configPath = app()->basePath() . '/config';
+        $configPath = app()->basePath().'/config';
 
         $this->publishes([
             __DIR__.'/../../config/transactional-events.php' => $configPath.'/transactional-events.php',
