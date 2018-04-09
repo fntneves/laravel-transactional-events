@@ -150,9 +150,11 @@ Choose specific events that should always bypass the transactional layer, i.e., 
 
 ## Known issues
 
-> Events are not dispatched when tests use transactions to reset database.
+> Transactional events are not dispatched in tests.
 
-It is related to the dispatched events related to transactions. I introduced an [issue in Laravel internals](https://github.com/laravel/ideas/issues/1094) to discuss the possibility to disable transaction events, so they do not interfer with the application. For now, you can [use the following solution](https://gist.github.com/fntneves/7f0b99767fce369919211148942eb297).
+*This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832))_.*<br/>
+For previous versions, it is associated with the `RefreshDatabase` trait, namely when it uses database transactions to reset database after each test.
+This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never dispatcher. In order to get the expected behavior, [override the beginDatabaseTransaction method](https://gist.github.com/fntneves/7f0b99767fce369919211148942eb297) of the `RefreshDatabase` trait.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
