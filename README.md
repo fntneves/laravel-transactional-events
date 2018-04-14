@@ -32,7 +32,7 @@ A failure will rollback database changes made during the transaction. However, t
 
 The purpose of this package is to ensure that events are actually dispatched **if and only if** the transaction in which they were dispatched succeeds. According to the example, this package guarantees that the `OrderWasProcessed` event is not dispatched if the transaction fails.
 
-Please note that events dispatched out of transactions will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
+Please note that events dispatched out of transactions will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events in which the `$halt` parameter is set to `true`.
 
 ## Installation
 
