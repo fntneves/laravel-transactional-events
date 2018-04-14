@@ -3,6 +3,7 @@
 namespace Neves\Testing;
 
 namespace Illuminate\Events\Dispatcher;
+
 use Illuminate\Foundation\Testing\RefreshDatabase as BaseRefreshDatabase;
 
 trait RefreshDatabase
