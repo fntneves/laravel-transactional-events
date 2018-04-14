@@ -3,7 +3,7 @@
 <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
 <a href="https://packagist.org/packages/fntneves/laravel-transactional-events"><img src="https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable" alt="Latest Stable Version"></a>
 
-This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to achieve, without changing a single line of code, a better consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`, by changing the configuration file.
+This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to ensure, without changing a single line of code, consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events (such as `saved` and `created`) by changing the configuration file.
 
 * [Introduction](#introduction)
 * [Installation](#installation)
@@ -14,7 +14,7 @@ This package introduces a transactional layer to the Laravel Event Dispatcher. I
 
 ## Introduction
 
-Let's start with an example representing a simple process of ordering tickets. Assume this involves database changes and a payment registration. A custom event is dispatched when the order is processed in the database.
+Let's start with an example representing a simple process of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched when the order is processed in the database.
 
 ```php
 DB::transaction(function() {
@@ -26,13 +26,13 @@ DB::transaction(function() {
 });
 ```
 
-The transaction in the above example may fail for several reasons. For instance, it may fail in the `orderTickets` method or in the payment service or just simply due to a deadlock.
+The transaction in the above example may fail for several reasons. For instance, an exception may occur in the `orderTickets` method or in the payment service. Also, it can fail simply due to a deadlock.
 
-A failure will rollback database changes made during the transactionk. However, the `OrderWasProcessed` event is actually dispatched and eventually will be executed.
+A failure will rollback database changes made during the transaction. However, this is not true for the `OrderWasProcessed` event, which is actually dispatched and eventually executed. Considering that this event may result in sending a confirmation e-mail to an user, managing it the right way becomes mandatory.
 
-The purpose of this package is to ensure that events are dispatched **if and only if** the transaction in which they were dispatched commits. According to the example, this package guarantees that the `OrderWasProcessed` event is not dispatched if the transaction does not commit.
+The purpose of this package is to ensure that events are actually dispatched **if and only if** the transaction in which they were dispatched succeeds. According to the example, this package guarantees that the `OrderWasProcessed` event is not dispatched if the transaction fails.
 
-However, when events are dispatched out of transactions, they will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
+Please note that events dispatched out of transactions will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events that where the `$halt` parameter is set to `true`.
 
 ## Installation
 
@@ -40,7 +40,7 @@ However, when events are dispatched out of transactions, they will bypass the tr
 * [Lumen](#lumen) (5.5+)
 
 ### Laravel
-The installation of this package in Laravel is automatic thanks to the _Package Auto-Discovery_ feature of Laravel 5.5.
+The installation of this package in Laravel is automatic thanks to the _Package Auto-Discovery_ feature of Laravel 5.5+.
 Just add this package to the `composer.json` file and it will be ready for your application.
 
 ```
@@ -72,7 +72,7 @@ Then, in `bootstrap/app.php`, register the configuration and the service provide
 *Note:* This package must be registered _after_ the default EventServiceProvider, so your event listeners are not overriden. 
 
 ```php
-// The default EventServiceProvider must be registered before.
+// The default EventServiceProvider must be registered.
 $app->register(App\Providers\EventServiceProvider::class);
 
 ...
@@ -86,7 +86,7 @@ $app->register(Neves\Events\EventServiceProvider::class);
 The transactional layer is enabled by default for the events placed under the `App\Events` namespace.
 
 However, the easiest way to enable transactional behavior on your events is to implement the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
-*Note that events that implement it will become transactional even when excluded in config.*
+*Note that events that implement it will behave as transactional events even when excluded in config.*
 
 ```php
 namespace App\Events;
@@ -104,7 +104,7 @@ class TicketsOrdered implements TransactionalEvent
 }
 ```
 
-As this package does not require any changes in code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
+As this package does not require any changes in your code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
 
 ```php
 Event::dispatch(new App\Event\TicketsOrdered) // Using Event facade
@@ -112,16 +112,16 @@ event(new App\Event\TicketsOrdered) // Using event() helper method
 broadcast(new App\Event\TicketsOrdered) // Using broadcast() helper method
 ```
 
-Even if you are using queues, they will still work because this package does not change the core behavior of the event dispatcher. However, they will be enqueued as soon as the active transaction succeeds. Otherwise, they will be discarded.
+Even if you are using queues, they will still work smothly because this package does not change the core behavior of the event dispatcher. They will be enqueued as soon as the active transaction succeeds. Otherwise, they will be discarded.
 
-**Reminder:** Events are considered as transactional when they are dispatched within transactions. When an event is dispatched out of transactions, they bypass the transactional layer.
+**Reminder:** Events are considered transactional when they are dispatched within transactions. When an event is dispatched out of transactions, they bypass the transactional layer.
 
 
 ## Configuration
 
 The following keys are present in the configuration file:
 
-The transactional behavior of events can be enabled or disabled by changing the following property:
+The transactional behavior can be enabled or disabled by changing the following property:
 ```php
 'enable' => true
 ```
@@ -132,7 +132,7 @@ By default, the transactional behavior will be applied to events on `App\Events`
 'transactional' => ['App\Events']
 ```
 
-Choose specific events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher. By default, all `*ed` Eloquent events are excluded.
+Choose the events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher. By default, all `*ed` Eloquent events are excluded.
 
 ```php
 'excluded' => [
@@ -154,7 +154,7 @@ Choose specific events that should always bypass the transactional layer, i.e., 
 
 **This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832)).**<br/>
 For previous versions, it is associated with the `RefreshDatabase` trait, namely when it uses database transactions to reset database after each test.
-This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never dispatcher. In order to get the expected behavior, [override the beginDatabaseTransaction method](https://gist.github.com/fntneves/7f0b99767fce369919211148942eb297) of the `RefreshDatabase` trait.
+This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never dispatcher. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` trait in your tests instead of the one originally provided by Laravel.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
