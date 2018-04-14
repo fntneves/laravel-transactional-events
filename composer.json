@@ -17,7 +17,7 @@
     ],
     "autoload": {
         "psr-0": {
-            "Neves\\Events\\": "src/"
+            "Neves\\": "src/"
         }
     },
     "extra": {

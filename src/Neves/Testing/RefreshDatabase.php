@@ -1,6 +1,6 @@
 <?php
 
-namespace Neves\Events\Testing;
+namespace Neves\Testing;
 
 use Illuminate\Foundation\Testing\RefreshDatabase as BaseRefreshDatabase;
 
