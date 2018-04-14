@@ -2,8 +2,6 @@
 
 namespace Neves\Testing;
 
-namespace Illuminate\Events\Dispatcher;
-
 use Illuminate\Foundation\Testing\RefreshDatabase as BaseRefreshDatabase;
 
 trait RefreshDatabase
@@ -17,7 +15,7 @@ trait RefreshDatabase
      */
     public function beginDatabaseTransaction()
     {
-        static $emptyDispatcher = new \Illuminate\Events\Dispatcher;
+        $emptyDispatcher = new \Illuminate\Events\Dispatcher;
         $database = $this->app->make('db');
 
         foreach ($this->connectionsToTransact() as $name) {
