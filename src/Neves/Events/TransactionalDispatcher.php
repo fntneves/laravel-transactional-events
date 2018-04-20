@@ -148,7 +148,7 @@ class TransactionalDispatcher implements DispatcherContract
 
         $eventData = [
             'event' => $event,
-            'payload' => clone $payload,
+            'payload' => is_object($payload) ? clone $payload : $payload,
         ];
         $transactionLevelEvents = &$this->pendingEvents[$connectionId][$transactionLevel];
         $transactionLevelEvents[count($transactionLevelEvents) - 1][] = $eventData;
