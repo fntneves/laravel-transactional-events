@@ -146,10 +146,10 @@ class TransactionalDispatcher implements DispatcherContract
         $connectionId = $connection->getName();
         $transactionLevel = $this->transactionLevel;
 
-		$eventData = [
-			'event' => $event,
-			'payload' => clone $payload,
-		];
+        $eventData = [
+            'event' => $event,
+            'payload' => clone $payload,
+        ];
         $transactionLevelEvents = &$this->pendingEvents[$connectionId][$transactionLevel];
         $transactionLevelEvents[count($transactionLevelEvents) - 1][] = $eventData;
     }
