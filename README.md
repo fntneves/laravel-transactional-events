@@ -121,7 +121,7 @@ Even if you are using queues, they will still work smothly because this package 
 
 The following keys are present in the configuration file:
 
-The transactional behavior can be enabled or disabled by changing the following property:
+Enable or disable the transactional behavior by changing the following property:
 ```php
 'enable' => true
 ```
@@ -139,7 +139,6 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
     // 'eloquent.*',
     'eloquent.booted',
     'eloquent.retrieved',
-    'eloquent.created',
     'eloquent.saved',
     'eloquent.updated',
     'eloquent.created',
@@ -154,7 +153,7 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
 
 **This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832)).**<br/>
 For previous versions, it is associated with the `RefreshDatabase` trait, namely when it uses database transactions to reset database after each test.
-This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never dispatcher. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` trait in your tests instead of the one originally provided by Laravel.
+This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never actually dispatched. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` trait in your tests instead of the one originally provided by Laravel.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
