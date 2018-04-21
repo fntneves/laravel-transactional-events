@@ -126,6 +126,28 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
+    public function it_does_not_forget_dispatched_events_on_the_same_transaction_level_after_a_forced_rollback()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = $_SERVER['__events'] ?? 0;
+            $_SERVER['__events']++;
+        });
+
+        DB::transaction(function () {
+            DB::transaction(function () {
+                $this->dispatcher->dispatch('foo');
+            });
+
+            DB::transaction(function () {
+                $this->dispatcher->dispatch('foo');
+                DB::rollBack();
+            });
+        });
+
+        $this->assertEquals(1, $_SERVER['__events']);
+    }
+
+    /** @test */
     public function it_does_not_dispatch_events_after_nested_transaction_commits()
     {
         $this->dispatcher->listen('foo', function () {
@@ -164,6 +186,23 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
+    public function it_does_not_dispatch_events_after_nested_transaction_forced_rollbacks()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = 'bar';
+        });
+
+            DB::transaction(function () {
+                DB::transaction(function () {
+                    $this->dispatcher->dispatch('foo');
+                    DB::rollBack();
+                });
+            });
+
+        $this->assertArrayNotHasKey('__events', $_SERVER);
+    }
+
+    /** @test */
     public function it_does_not_dispatch_events_after_outer_transaction_rollback()
     {
         $this->dispatcher->listen('foo', function () {
@@ -180,6 +219,23 @@ class TransactionalDispatcherTest extends TestCase
         } catch (\Exception $e) {
             //
         }
+
+        $this->assertArrayNotHasKey('__events', $_SERVER);
+    }
+
+    /** @test */
+    public function it_does_not_dispatch_events_after_outer_transaction_forced_rollback()
+    {
+        $this->dispatcher->listen('foo', function () {
+            $_SERVER['__events'] = 'bar';
+        });
+
+        DB::transaction(function () {
+            DB::transaction(function () {
+                $this->dispatcher->dispatch('foo');
+            });
+            DB::rollback();
+        });
 
         $this->assertArrayNotHasKey('__events', $_SERVER);
     }
