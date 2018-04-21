@@ -192,12 +192,12 @@ class TransactionalDispatcherTest extends TestCase
             $_SERVER['__events'] = 'bar';
         });
 
+        DB::transaction(function () {
             DB::transaction(function () {
-                DB::transaction(function () {
-                    $this->dispatcher->dispatch('foo');
-                    DB::rollBack();
-                });
+                $this->dispatcher->dispatch('foo');
+                DB::rollBack();
             });
+        });
 
         $this->assertArrayNotHasKey('__events', $_SERVER);
     }
