@@ -55,6 +55,28 @@ class TransactionalEloquentTest extends TestCase
         $this->assertEquals('bar', $_SERVER['__events']);
     }
 
+    /** @test */
+    public function it_handles_payload_context()
+    {
+        $this->dispatcher->setExcludedEvents(['eloquent.retrieved']);
+
+        $model = new \stdClass();
+        $model->original = ['name' => 'before'];
+        $model->attributes = ['name' => 'after'];
+
+        $this->dispatcher->listen('eloquent.saved', function ($model) {
+            $this->assertEquals(['name' => 'before'], $model->original);
+            $this->assertEquals(['name' => 'after'], $model->attributes);
+        });
+
+        DB::transaction(function () use ($model) {
+            $this->dispatcher->dispatch('eloquent.saved', $model);
+            $model->original = $model->attributes;  // syncOriginal
+        });
+
+        $this->assertEquals($model->original, $model->attributes);
+    }
+
     protected function getPackageProviders($app)
     {
         return [EventServiceProvider::class];

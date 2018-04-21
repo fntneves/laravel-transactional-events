@@ -24,7 +24,6 @@ return [
         // 'eloquent.*',
         'eloquent.booted',
         'eloquent.retrieved',
-        'eloquent.created',
         'eloquent.saved',
         'eloquent.updated',
         'eloquent.created',
