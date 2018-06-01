@@ -328,7 +328,7 @@ class TransactionalDispatcherTest extends TestCase
         $this->dispatcher->listen('foo', function () use (&$count) {
             DB::transaction(function () use (&$count) {
                 if ($count > 1) {
-                    $this->fail('Infinite loop while dispatchine events (See #12).');
+                    $this->fail('Infinite loop while dispatching events (See #12).');
                 }
 
                 $count++;

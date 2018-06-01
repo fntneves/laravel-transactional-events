@@ -3,7 +3,7 @@
 <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
 <a href="https://packagist.org/packages/fntneves/laravel-transactional-events"><img src="https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable" alt="Latest Stable Version"></a>
 
-This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to ensure, without changing a single line of code, consistency between events dispatched during database transactions. This behavior is also applicable to Eloquent events (such as `saved` and `created`) by changing the configuration file.
+This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to ensure, without changing a single line of code, consistency between events dispatched and database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`.
 
 * [Introduction](#introduction)
 * [Installation](#installation)
@@ -14,7 +14,7 @@ This package introduces a transactional layer to the Laravel Event Dispatcher. I
 
 ## Introduction
 
-Let's start with an example representing a simple process of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched when the order is processed in the database.
+Let's start with a simple example of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched when the order immediately after the order processed in the database.
 
 ```php
 DB::transaction(function() {
@@ -26,13 +26,13 @@ DB::transaction(function() {
 });
 ```
 
-The transaction in the above example may fail for several reasons. For instance, an exception may occur in the `orderTickets` method or in the payment service. Also, it can fail simply due to a deadlock.
+The transaction in the above example may fail for several reasons: an exception may occur in the `orderTickets` method or in the payment service or simply due to a deadlock.
 
-A failure will rollback database changes made during the transaction. However, this is not true for the `OrderWasProcessed` event, which is actually dispatched and eventually executed. Considering that this event may result in sending a confirmation e-mail to an user, managing it the right way becomes mandatory.
+A failure will rollback the database changes made during the transaction. However, this is not true for the `OrderWasProcessed` event, which is actually dispatched and eventually executed. Considering that this event may result in sending an e-mail with the order confirmation, managing it the right way becomes mandatory.
 
-The purpose of this package is to ensure that events are actually dispatched **if and only if** the transaction in which they were dispatched succeeds. According to the example, this package guarantees that the `OrderWasProcessed` event is not dispatched if the transaction fails.
+The purpose of this package is to actually dispatch events **if and only if** the transaction in which they were dispatched commits. For instance, in the above example the `OrderWasProcessed` event would not be dispatched if the transaction fails.
 
-Please note that events dispatched out of transactions will bypass the transactional layer, meaning that it will be handled by the default Event Dispatcher. This is true also for events in which the `$halt` parameter is set to `true`.
+Please note that events dispatched out of transactions will bypass the transactional layer, meaning that they will be handled by the default Event Dispatcher. This is true also for events in which the `$halt` parameter is set to `true`.
 
 ## Installation
 
@@ -47,7 +47,7 @@ Just add this package to the `composer.json` file and it will be ready for your 
 composer require fntneves/laravel-transactional-events
 ```
 
-A configuration file is also part of this package. Run the following command to copy the provided configuration file `transactional-events.php` to your `config` folder.
+A configuration file is also available for this package. Run the following command to copy the provided configuration file `transactional-events.php` your `config` folder.
 
 ```
 php artisan vendor:publish --provider="Neves\Events\EventServiceProvider"
@@ -69,7 +69,7 @@ cp vendor/fntneves/laravel-transactional-events/src/config/transactional-events.
 ```
 
 Then, in `bootstrap/app.php`, register the configuration and the service provider:<br/>
-*Note:* This package must be registered _after_ the default EventServiceProvider, so your event listeners are not overriden. 
+*Note:* This package must be registered _after_ the default EventServiceProvider, so your event listeners are not overriden.
 
 ```php
 // The default EventServiceProvider must be registered.
@@ -85,7 +85,7 @@ $app->register(Neves\Events\EventServiceProvider::class);
 
 The transactional layer is enabled by default for the events placed under the `App\Events` namespace.
 
-However, the easiest way to enable transactional behavior on your events is to implement the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
+However, the easiest way to make your events behave as transactional events is by implementing the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
 *Note that events that implement it will behave as transactional events even when excluded in config.*
 
 ```php
@@ -114,7 +114,7 @@ broadcast(new App\Event\TicketsOrdered) // Using broadcast() helper method
 
 Even if you are using queues, they will still work smothly because this package does not change the core behavior of the event dispatcher. They will be enqueued as soon as the active transaction succeeds. Otherwise, they will be discarded.
 
-**Reminder:** Events are considered transactional when they are dispatched within transactions. When an event is dispatched out of transactions, they bypass the transactional layer.
+**Reminder:** Events are considered transactional when they are dispatched within transactions. When an event is dispatched out of transactions, it bypasses the transactional layer.
 
 
 ## Configuration
