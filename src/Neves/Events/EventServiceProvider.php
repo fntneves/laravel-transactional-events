@@ -23,14 +23,14 @@ class EventServiceProvider extends ServiceProvider
             return;
         }
 
-        $connectionResolver = $this->app->make('db');
-        $eventDispatcher = $this->app->make(EventDispatcher::class);
-        $this->app->extend('events', function () use ($connectionResolver, $eventDispatcher) {
-            $dispatcher = new TransactionalDispatcher($connectionResolver, $eventDispatcher);
-            $dispatcher->setTransactionalEvents($this->app['config']->get('transactional-events.transactional'));
-            $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded'));
-
-            return $dispatcher;
+        $this->app->afterResolving('db', function($connectionResolver){
+            $eventDispatcher = $this->app->make(EventDispatcher::class);
+            $this->app->extend('events', function() use ($connectionResolver, $eventDispatcher) {
+                $dispatcher = new TransactionalDispatcher($connectionResolver, $eventDispatcher);
+                $dispatcher->setTransactionalEvents($this->app['config']->get('transactional-events.transactional'));
+                $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded'));
+                return $dispatcher;
+            });
         });
     }
 
