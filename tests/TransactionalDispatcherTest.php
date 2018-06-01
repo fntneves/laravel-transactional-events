@@ -318,6 +318,30 @@ class TransactionalDispatcherTest extends TestCase
         });
     }
 
+    /**
+     * Regression test: Fix infinite loop caused by TransactionCommitted (#12)
+     * @test
+     */
+    public function nested_transactions_on_dispatch_does_not_cause_infinite_loop()
+    {
+        $count = 0;
+        $this->dispatcher->listen('foo', function () use (&$count) {
+            DB::transaction(function() use (&$count) {
+                if ($count > 1) {
+                    $this->fail('Infinite loop while dispatchine events (See #12).');
+                }
+
+                $count++;
+            });
+        });
+
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo');
+        });
+
+        $this->assertEquals(1, $count);
+    }
+
     protected function getPackageProviders($app)
     {
         // Add an event listener to the previous event dispatcher.
