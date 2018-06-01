@@ -163,15 +163,17 @@ class TransactionalDispatcher implements DispatcherContract
     protected function dispatchPendingEvents(ConnectionInterface $connection)
     {
         $connectionId = $connection->getName();
-        foreach ($this->pendingEvents[$connectionId] as $transactionsEvents) {
+        $consumingEvents = $this->pendingEvents[$connectionId];
+
+        unset($this->pendingEvents[$connectionId]);
+
+        foreach ($consumingEvents as $transactionsEvents) {
             foreach ($transactionsEvents as $transactionEvents) {
                 foreach ($transactionEvents as $event) {
                     $this->dispatcher->dispatch($event['event'], $event['payload']);
                 }
             }
         }
-
-        unset($this->pendingEvents[$connectionId]);
     }
 
     /**
