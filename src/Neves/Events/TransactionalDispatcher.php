@@ -145,6 +145,12 @@ class TransactionalDispatcher implements DispatcherContract
     {
         $connectionId = $connection->getName();
         $transactionLevel = $this->transactionLevel;
+        
+        // When working with multiple connections, we don't might come across
+        // one that isn't prepared yet, nor will it have any events
+        if (!array_key_exists($connectionId, $this->pendingEvents)) {
+            return;
+        }
 
         $eventData = [
             'event' => $event,
