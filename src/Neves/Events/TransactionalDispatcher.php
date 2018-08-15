@@ -143,14 +143,12 @@ class TransactionalDispatcher implements DispatcherContract
      */
     protected function addPendingEvent($connection, $event, $payload)
     {
-        $connectionId = $connection->getName();
-        $transactionLevel = $this->transactionLevel;
-
-        // When working with multiple connections, we might come across
-        // one that isn't prepared yet, nor will it have any events
-        if (! array_key_exists($connectionId, $this->pendingEvents)) {
+        if ($this->isPrepared($connection)) {
             return;
         }
+
+        $connectionId = $connection->getName();
+        $transactionLevel = $this->transactionLevel;
 
         $eventData = [
             'event' => $event,
@@ -266,6 +264,17 @@ class TransactionalDispatcher implements DispatcherContract
         }
 
         return false;
+    }
+
+    /**
+     * Check if a connection has been prepared for transactional events.
+     *
+     * @param   \Illuminate\Database\ConnectionInterface    $connection
+     * @return  bool
+     */
+    private function isPrepared($connection)
+    {
+        return isset($this->pendingEvents[$connection->getName()]);
     }
 
     /**
