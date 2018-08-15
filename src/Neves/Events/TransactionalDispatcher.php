@@ -143,7 +143,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     protected function addPendingEvent($connection, $event, $payload)
     {
-        if (!$this->isPrepared($connection)) {
+        if (! $this->isPrepared($connection)) {
             return;
         }
 
