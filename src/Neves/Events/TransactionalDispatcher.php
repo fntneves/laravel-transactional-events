@@ -103,13 +103,11 @@ class TransactionalDispatcher implements DispatcherContract
      */
     public function commit(ConnectionInterface $connection)
     {
-        $connectionId = $connection->getName();
-
         // We decrement the transaction level and prevent events to be dispatched
         // while comitting nested transactions, so no transient state is saved.
         // Only dispatch events right after the outer transaction commits.
         $this->transactionLevel--;
-        if ($this->transactionLevel > 0 || ! isset($this->pendingEvents[$connectionId])) {
+        if (! $this->isPrepared($connection) || $this->transactionLevel > 0) {
             return;
         }
 
@@ -143,10 +141,6 @@ class TransactionalDispatcher implements DispatcherContract
      */
     protected function addPendingEvent($connection, $event, $payload)
     {
-        if (! $this->isPrepared($connection)) {
-            return;
-        }
-
         $connectionId = $connection->getName();
         $transactionLevel = $this->transactionLevel;
 
@@ -230,7 +224,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     private function isTransactionalEvent(ConnectionInterface $connection, $event)
     {
-        if ($this->transactionLevel > 0) {
+        if ($this->isPrepared($connection) && $this->transactionLevel > 0) {
             return $this->shouldHandle($event);
         }
 
