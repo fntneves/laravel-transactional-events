@@ -12,7 +12,7 @@ use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 
-class TransactionalDispatcher extends EventDispatcher implements DispatcherContract
+class TransactionalDispatcher implements DispatcherContract
 {
     /**
      * The connection resolver.
