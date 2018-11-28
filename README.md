@@ -14,7 +14,7 @@ This package introduces a transactional layer to the Laravel Event Dispatcher. I
 
 ## Introduction
 
-Let's start with a simple example of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched when the order immediately after the order processed in the database.
+Let's start with a simple example of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched immediately after the order is processed in the database.
 
 ```php
 DB::transaction(function() {
