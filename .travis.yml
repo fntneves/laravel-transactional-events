@@ -33,4 +33,4 @@ before_script:
   - composer update
   - mkdir -p build/logs
 
-script: phpunit
+script: vendor/bin/phpunit
