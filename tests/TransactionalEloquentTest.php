@@ -7,7 +7,7 @@ class TransactionalEloquentTest extends TestCase
 {
     protected $dispatcher;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
