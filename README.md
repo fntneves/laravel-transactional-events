@@ -36,6 +36,11 @@ Please note that events dispatched out of transactions will bypass the transacti
 
 ## Installation
 
+ Laravel  | Package
+:---------|:----------
+ 5.5.x-5.7.x   | 1.4.x
+ 5.8.x    | 1.8.x
+
 * [Laravel](#laravel) (5.5+)
 * [Lumen](#lumen) (5.5+)
 

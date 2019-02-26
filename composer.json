@@ -4,10 +4,9 @@
     "type": "library",
     "license": "MIT",
     "require": {
-        "illuminate/database": "5.5.* || 5.6.* || 5.7.* || 5.8.*",
-        "illuminate/events": "5.5.* || 5.6.* || 5.7.* || 5.8.*",
-        "illuminate/support": "5.5.* || 5.6.* || 5.7.* || 5.8.*",
-        "php": "^7.0"
+        "illuminate/database": "~5.8.0",
+        "illuminate/events": "~5.8.0",
+        "illuminate/support": "~5.8.0"
     },
     "authors": [
         {
@@ -33,6 +32,6 @@
         "sort-packages": true
     },
     "require-dev": {
-        "orchestra/testbench": "3.5.* || 3.6.* || 3.7.* || 3.8.*"
+        "orchestra/testbench": "~3.8.0"
     }
 }
