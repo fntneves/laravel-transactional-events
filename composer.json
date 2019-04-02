@@ -1,5 +1,5 @@
 {
-    "name": "fntneves/laravel-transactional-events",
+    "name": "merkeleon/laravel-transactional-events",
     "description": "Transactional layer for Laravel Event Dispatcher",
     "type": "library",
     "license": "MIT",
@@ -16,13 +16,13 @@
     ],
     "autoload": {
         "psr-0": {
-            "Neves\\": "src/"
+            "Merkeleon\\Events\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Neves\\Events\\EventServiceProvider"
+                "Merkeleon\\Events\\EventServiceProvider"
             ]
         }
     },
