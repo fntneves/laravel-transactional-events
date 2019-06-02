@@ -9,7 +9,7 @@ class TransactionalDispatcherTest extends TestCase
 {
     protected $dispatcher;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -102,49 +102,33 @@ class TransactionalDispatcherTest extends TestCase
     /** @test */
     public function it_does_not_forget_dispatched_events_on_the_same_transaction_level_after_a_rollback()
     {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events'] = $_SERVER['__events'] ?? 0;
-            $_SERVER['__events']++;
+        $this->dispatcher->listen('foo', function ($payload) {
+            $_SERVER['__events'] = $_SERVER['__events'] ?? [];
+            $_SERVER['__events'][] = $payload;
         });
 
         DB::transaction(function () {
+            $this->dispatcher->dispatch('foo', 'first');
+
             DB::transaction(function () {
-                $this->dispatcher->dispatch('foo');
+                $this->dispatcher->dispatch('foo', 'second');
             });
 
             try {
                 DB::transaction(function () {
-                    $this->dispatcher->dispatch('foo');
+                    $this->dispatcher->dispatch('foo', 'third');
                     throw new \Exception;
                 });
             } catch (\Exception $e) {
                 //
             }
+            $this->dispatcher->dispatch('foo', 'fourth');
         });
 
-        $this->assertEquals(1, $_SERVER['__events']);
-    }
-
-    /** @test */
-    public function it_does_not_forget_dispatched_events_on_the_same_transaction_level_after_a_forced_rollback()
-    {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events'] = $_SERVER['__events'] ?? 0;
-            $_SERVER['__events']++;
-        });
-
-        DB::transaction(function () {
-            DB::transaction(function () {
-                $this->dispatcher->dispatch('foo');
-            });
-
-            DB::transaction(function () {
-                $this->dispatcher->dispatch('foo');
-                DB::rollBack();
-            });
-        });
-
-        $this->assertEquals(1, $_SERVER['__events']);
+        $this->assertEquals(3, count($_SERVER['__events']));
+        $this->assertEquals('first', $_SERVER['__events'][0]);
+        $this->assertEquals('second', $_SERVER['__events'][1]);
+        $this->assertEquals('fourth', $_SERVER['__events'][2]);
     }
 
     /** @test */
@@ -186,23 +170,6 @@ class TransactionalDispatcherTest extends TestCase
     }
 
     /** @test */
-    public function it_does_not_dispatch_events_after_nested_transaction_forced_rollbacks()
-    {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events'] = 'bar';
-        });
-
-        DB::transaction(function () {
-            DB::transaction(function () {
-                $this->dispatcher->dispatch('foo');
-                DB::rollBack();
-            });
-        });
-
-        $this->assertArrayNotHasKey('__events', $_SERVER);
-    }
-
-    /** @test */
     public function it_does_not_dispatch_events_after_outer_transaction_rollback()
     {
         $this->dispatcher->listen('foo', function () {
@@ -219,23 +186,6 @@ class TransactionalDispatcherTest extends TestCase
         } catch (\Exception $e) {
             //
         }
-
-        $this->assertArrayNotHasKey('__events', $_SERVER);
-    }
-
-    /** @test */
-    public function it_does_not_dispatch_events_after_outer_transaction_forced_rollback()
-    {
-        $this->dispatcher->listen('foo', function () {
-            $_SERVER['__events'] = 'bar';
-        });
-
-        DB::transaction(function () {
-            DB::transaction(function () {
-                $this->dispatcher->dispatch('foo');
-            });
-            DB::rollback();
-        });
 
         $this->assertArrayNotHasKey('__events', $_SERVER);
     }
@@ -342,6 +292,30 @@ class TransactionalDispatcherTest extends TestCase
         $this->assertEquals(1, $count);
     }
 
+    /**
+     * Regression test: Nested multiple connections problems (#23).
+     * @test
+     */
+    public function it_works_with_non_default_connections()
+    {
+        $this->dispatcher->listen('foo', function ($payload) {
+            $_SERVER['__events'] = $_SERVER['__events'] ?? [];
+            $_SERVER['__events'][] = $payload;
+        });
+
+        DB::transaction(function () {
+            $this->dispatcher->dispatch('foo', 'first');
+
+            DB::connection('other')->transaction(function () {
+                $this->dispatcher->dispatch('foo', 'second');
+            });
+        });
+
+        $this->assertEquals(2, count($_SERVER['__events']));
+        $this->assertEquals('first', $_SERVER['__events'][0]);
+        $this->assertEquals('second', $_SERVER['__events'][1]);
+    }
+
     protected function getPackageProviders($app)
     {
         // Add an event listener to the previous event dispatcher.
@@ -356,6 +330,10 @@ class TransactionalDispatcherTest extends TestCase
     {
         $app['config']->set('database.default', 'testbench');
         $app['config']->set('database.connections.testbench', [
+            'driver'   => 'sqlite',
+            'database' => ':memory:',
+        ]);
+        $app['config']->set('database.connections.other', [
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);

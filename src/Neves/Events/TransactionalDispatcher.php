@@ -3,23 +3,20 @@
 namespace Neves\Events;
 
 use Illuminate\Support\Str;
-use Illuminate\Database\ConnectionInterface;
+use drupol\phptree\Node\ValueNode;
+use Illuminate\Support\Collection;
+use drupol\phptree\Node\ValueNodeInterface;
 use Neves\Events\Contracts\TransactionalEvent;
-use Illuminate\Database\ConnectionResolverInterface;
+use Neves\Events\Concerns\DelegatesToDispatcher;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 
-class TransactionalDispatcher implements DispatcherContract
+final class TransactionalDispatcher implements DispatcherContract
 {
-    /**
-     * The connection resolver.
-     *
-     * @var \Illuminate\Database\ConnectionResolverInterface
-     */
-    private $connectionResolver;
+    use DelegatesToDispatcher;
 
     /**
      * The event dispatcher.
@@ -47,30 +44,57 @@ class TransactionalDispatcher implements DispatcherContract
     ];
 
     /**
-     * The current transaction level.
+     * The current prepared transaction.
      *
-     * @var array
+     * @var \drupol\phptree\Node\ValueNodeInterface
      */
-    private $transactionLevel = 0;
+    private $currentTransaction;
 
     /**
-     * The current pending events per transaction level of connections.
+     * All pending events in order.
      *
      * @var array
      */
-    private $pendingEvents = [];
+    private $events = [];
+
+    /**
+     * Next position for event storing.
+     *
+     * @var int
+     */
+    private $nextEventIndex = 0;
 
     /**
      * Create a new transactional event dispatcher instance.
      *
-     * @param  \Illuminate\Database\ConnectionResolverInterface  $connectionResolver
      * @param  \Illuminate\Contracts\Events\Dispatcher  $eventDispatcher
      */
-    public function __construct(ConnectionResolverInterface $connectionResolver, EventDispatcher $eventDispatcher)
+    public function __construct(EventDispatcher $eventDispatcher)
     {
-        $this->connectionResolver = $connectionResolver;
         $this->dispatcher = $eventDispatcher;
         $this->setUpListeners();
+    }
+
+    /**
+     * Set list of events that should be handled by transactional layer.
+     *
+     * @param  array|null  $transactional
+     * @return void
+     */
+    public function setTransactionalEvents(array $transactional) : void
+    {
+        $this->transactional = $transactional;
+    }
+
+    /**
+     * Set exceptions list.
+     *
+     * @param  array  $excluded
+     * @return void
+     */
+    public function setExcludedEvents(array $excluded = []) : void
+    {
+        $this->excluded = array_merge(['Illuminate\Database\Events'], $excluded);
     }
 
     /**
@@ -83,152 +107,139 @@ class TransactionalDispatcher implements DispatcherContract
      */
     public function dispatch($event, $payload = [], $halt = false)
     {
-        $connection = $this->connectionResolver->connection();
-
         // If halt is specified, then automatically dispatches the event
         // to the original dispatcher. This happens because the caller
         // is waiting for the result of the listeners of this event.
-        if ($halt || ! $this->isTransactionalEvent($connection, $event)) {
+        if ($halt || ! $this->isTransactionalEvent($event)) {
             return $this->dispatcher->dispatch($event, $payload, $halt);
         }
 
-        $this->addPendingEvent($connection, $event, $payload);
+        $this->addPendingEvent($event, $payload);
+    }
+
+    /**
+     * Prepare a new transaction.
+     *
+     * @return void
+     */
+    protected function onTransactionBegin() : void
+    {
+        $transactionNode = new ValueNode(new Collection());
+
+        $this->currentTransaction = is_null($this->currentTransaction)
+            ? $transactionNode
+            : $this->currentTransaction->add($transactionNode);
+
+        $this->currentTransaction = $transactionNode;
+    }
+
+    /**
+     * Add a pending transactional event to the current transaction.
+     *
+     * @param  string|object $event
+     * @param  mixed $payload
+     * @return void
+     */
+    protected function addPendingEvent($event, $payload) : void
+    {
+        $eventData = [
+            'event' => $event,
+            'payload' => is_object($payload) ? clone $payload : $payload,
+        ];
+
+        $this->currentTransaction->getValue()->push($eventData);
+        $this->events[$this->nextEventIndex++] = $eventData;
+    }
+
+    /**
+     * Handle transaction commit.
+     *
+     * @return void
+     */
+    private function onTransactionCommit() : void
+    {
+        $committedTransaction = $this->finishTransaction();
+
+        if (! $committedTransaction->isRoot()) {
+            return;
+        }
+
+        $this->dispatchPendingEvents();
+    }
+
+    /**
+     * Clear enqueued events for the rollbacked transaction.
+     *
+     * @return void
+     */
+    private function onTransactionRollback() : void
+    {
+        $rolledBackTransaction = $this->finishTransaction();
+
+        if ($rolledBackTransaction->isRoot()) {
+            $this->resetEvents();
+
+            return;
+        }
+
+        $this->nextEventIndex -= $rolledBackTransaction->getValue()->count();
     }
 
     /**
      * Flush all pending events.
      *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
      * @return void
      */
-    public function commit(ConnectionInterface $connection)
+    private function dispatchPendingEvents() : void
     {
-        // We decrement the transaction level and prevent events to be dispatched
-        // while comitting nested transactions, so no transient state is saved.
-        // Only dispatch events right after the outer transaction commits.
-        $this->transactionLevel--;
-        if (! $this->isPrepared($connection) || $this->transactionLevel > 0) {
-            return;
+        // Prevent loops on event dispacthing. (See #12)
+        $events = $this->events;
+        $eventsCount = $this->nextEventIndex;
+        $this->resetEvents();
+
+        for ($i = 0; $i < $eventsCount; $i++) {
+            $event = $events[$i];
+            $this->dispatcher->dispatch($event['event'], $event['payload']);
         }
-
-        $this->dispatchPendingEvents($connection);
-    }
-
-    /**
-     * Prepare to store events for the current transaction.
-     *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
-     * @return void
-     */
-    protected function prepareTransaction($connection)
-    {
-        $connectionId = $connection->getName();
-        $this->transactionLevel = $this->transactionLevel > 0 ? $this->transactionLevel + 1 : 1;
-
-        // Now we prepare a new array level for this transaction in the current
-        // transaction level. It allows nested transactions to rollback and
-        // their events discarded without affecting previous transactions.
-        $this->pendingEvents[$connectionId][$this->transactionLevel][] = [];
-    }
-
-    /**
-     * Add a transactional event waiting for transaction to commit.
-     *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
-     * @param  string|object $event
-     * @param  mixed $payload
-     * @return void
-     */
-    protected function addPendingEvent($connection, $event, $payload)
-    {
-        $connectionId = $connection->getName();
-        $transactionLevel = $this->transactionLevel;
-
-        $eventData = [
-            'event' => $event,
-            'payload' => is_object($payload) ? clone $payload : $payload,
-        ];
-        $transactionLevelEvents = &$this->pendingEvents[$connectionId][$transactionLevel];
-        $transactionLevelEvents[count($transactionLevelEvents) - 1][] = $eventData;
-    }
-
-    /**
-     * Flush all pending events for the given connection.
-     *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
-     * @return void
-     */
-    protected function dispatchPendingEvents(ConnectionInterface $connection)
-    {
-        $connectionId = $connection->getName();
-        $consumingEvents = $this->pendingEvents[$connectionId];
-
-        unset($this->pendingEvents[$connectionId]);
-
-        foreach ($consumingEvents as $transactionsEvents) {
-            foreach ($transactionsEvents as $transactionEvents) {
-                foreach ($transactionEvents as $event) {
-                    $this->dispatcher->dispatch($event['event'], $event['payload']);
-                }
-            }
-        }
-    }
-
-    /**
-     * Clear enqueued events.
-     *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
-     * @return void
-     */
-    public function rollback(ConnectionInterface $connection)
-    {
-        $connectionId = $connection->getName();
-
-        if ($this->transactionLevel > 1) {
-            array_pop($this->pendingEvents[$connectionId][$this->transactionLevel]);
-        } else {
-            unset($this->pendingEvents[$connectionId]);
-        }
-
-        $this->transactionLevel--;
-    }
-
-    /**
-     * Set list of events that should be handled by transactional layer.
-     *
-     * @param  array|null  $transactional
-     * @return void
-     */
-    public function setTransactionalEvents(array $transactional)
-    {
-        $this->transactional = $transactional;
-    }
-
-    /**
-     * Set exceptions list.
-     *
-     * @param  array  $excluded
-     * @return void
-     */
-    public function setExcludedEvents(array $excluded = [])
-    {
-        $this->excluded = array_merge(['Illuminate\Database\Events'], $excluded);
     }
 
     /**
      * Check whether an event is a transactional event or not.
      *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
      * @param  string|object $event
      * @return bool
      */
-    private function isTransactionalEvent(ConnectionInterface $connection, $event)
+    private function isTransactionalEvent($event) : bool
     {
-        if ($this->isPrepared($connection) && $this->transactionLevel > 0) {
-            return $this->shouldHandle($event);
+        if (is_null($this->currentTransaction)) {
+            return false;
         }
 
-        return false;
+        return $this->shouldHandle($event);
+    }
+
+    /**
+     * Finish current transaction.
+     *
+     * @return \drupol\phptree\Node\ValueNodeInterface
+     */
+    private function finishTransaction() : ValueNodeInterface
+    {
+        $finished = $this->currentTransaction;
+        $this->currentTransaction = $finished->getParent();
+
+        return $finished;
+    }
+
+    /**
+     * Reset events list.
+     *
+     * @return void
+     */
+    private function resetEvents() : void
+    {
+        $this->events = [];
+        $this->nextEventIndex = 0;
     }
 
     /**
@@ -237,7 +248,7 @@ class TransactionalDispatcher implements DispatcherContract
      * @param  string|object  $event
      * @return bool
      */
-    private function shouldHandle($event)
+    private function shouldHandle($event) : bool
     {
         if ($event instanceof TransactionalEvent) {
             return true;
@@ -261,156 +272,35 @@ class TransactionalDispatcher implements DispatcherContract
     }
 
     /**
-     * Check if a connection has been prepared for transactional events.
-     *
-     * @param   \Illuminate\Database\ConnectionInterface    $connection
-     * @return  bool
-     */
-    private function isPrepared($connection)
-    {
-        return isset($this->pendingEvents[$connection->getName()]);
-    }
-
-    /**
      * Check whether an event name matches a pattern or not.
      *
      * @param  string  $pattern
      * @param  string  $event
      * @return bool
      */
-    private function matches($pattern, $event)
+    private function matches($pattern, $event) : bool
     {
         return (Str::contains($pattern, '*') && Str::is($pattern, $event))
             || Str::startsWith($event, $pattern);
     }
 
     /**
-     * Register an event listener with the dispatcher.
-     *
-     * @param  string|array $events
-     * @param  mixed $listener
-     * @return void
-     */
-    public function listen($events, $listener)
-    {
-        $this->dispatcher->listen($events, $listener);
-    }
-
-    /**
-     * Determine if a given event has listeners.
-     *
-     * @param  string $eventName
-     * @return bool
-     */
-    public function hasListeners($eventName)
-    {
-        return $this->dispatcher->hasListeners($eventName);
-    }
-
-    /**
-     * Register an event subscriber with the dispatcher.
-     *
-     * @param  object|string $subscriber
-     * @return void
-     */
-    public function subscribe($subscriber)
-    {
-        $this->dispatcher->subscribe($subscriber);
-    }
-
-    /**
-     * Dispatch an event until the first non-null response is returned.
-     *
-     * @param  string|object $event
-     * @param  mixed $payload
-     * @return array|null
-     */
-    public function until($event, $payload = [])
-    {
-        return $this->dispatcher->until($event, $payload);
-    }
-
-    /**
-     * Fire an event and call the listeners.
-     *
-     * @param  string|object  $event
-     * @param  mixed  $payload
-     * @param  bool  $halt
-     * @return array|null
-     */
-    public function fire($event, $payload = [], $halt = false)
-    {
-        return $this->dispatch($event, $payload, $halt);
-    }
-
-    /**
-     * Register an event and payload to be fired later.
-     *
-     * @param  string $event
-     * @param  array $payload
-     * @return void
-     */
-    public function push($event, $payload = [])
-    {
-        $this->dispatcher->push($event, $payload);
-    }
-
-    /**
-     * Flush a set of pushed events.
-     *
-     * @param  string $event
-     * @return void
-     */
-    public function flush($event)
-    {
-        $this->dispatcher->flush($event);
-    }
-
-    /**
-     * Remove a set of listeners from the dispatcher.
-     *
-     * @param  string $event
-     * @return void
-     */
-    public function forget($event)
-    {
-        $this->dispatcher->forget($event);
-    }
-
-    /**
-     * Forget all of the queued listeners.
+     * Setup listeners for transaction events.
      *
      * @return void
      */
-    public function forgetPushed()
+    private function setUpListeners() : void
     {
-        $this->dispatcher->forgetPushed();
-    }
-
-    /**
-     * Dynamically pass methods to the default dispatcher.
-     *
-     * @param  string  $method
-     * @param  array   $parameters
-     * @return mixed
-     */
-    public function __call($method, $parameters)
-    {
-        return $this->dispatcher->$method(...$parameters);
-    }
-
-    protected function setUpListeners()
-    {
-        $this->dispatcher->listen(TransactionBeginning::class, function ($event) {
-            $this->prepareTransaction($event->connection);
+        $this->dispatcher->listen(TransactionBeginning::class, function () {
+            $this->onTransactionBegin();
         });
 
-        $this->dispatcher->listen(TransactionCommitted::class, function ($event) {
-            $this->commit($event->connection);
+        $this->dispatcher->listen(TransactionCommitted::class, function () {
+            $this->onTransactionCommit();
         });
 
-        $this->dispatcher->listen(TransactionRolledBack::class, function ($event) {
-            $this->rollback($event->connection);
+        $this->dispatcher->listen(TransactionRolledBack::class, function () {
+            $this->onTransactionRollback();
         });
     }
 }
