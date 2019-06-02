@@ -5,7 +5,6 @@ namespace Neves\Events;
 use Illuminate\Support\Str;
 use drupol\phptree\Node\ValueNode;
 use Illuminate\Support\Collection;
-use drupol\phptree\Node\ValueNodeInterface;
 use Neves\Events\Contracts\TransactionalEvent;
 use Neves\Events\Concerns\DelegatesToDispatcher;
 use Illuminate\Database\Events\TransactionBeginning;
