@@ -284,17 +284,22 @@ final class TransactionalDispatcher implements DispatcherContract
             || Str::startsWith($event, $pattern);
     }
 
+    /**
+     * Setup listeners for transaction events.
+     *
+     * @return void
+     */
     private function setUpListeners() : void
     {
-        $this->dispatcher->listen(TransactionBeginning::class, function ($event) {
+        $this->dispatcher->listen(TransactionBeginning::class, function () {
             $this->onTransactionBegin();
         });
 
-        $this->dispatcher->listen(TransactionCommitted::class, function ($event) {
+        $this->dispatcher->listen(TransactionCommitted::class, function () {
             $this->onTransactionCommit();
         });
 
-        $this->dispatcher->listen(TransactionRolledBack::class, function ($event) {
+        $this->dispatcher->listen(TransactionRolledBack::class, function () {
             $this->onTransactionRollback();
         });
     }
