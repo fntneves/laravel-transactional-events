@@ -2,10 +2,10 @@
 
 namespace Neves\Events;
 
+use Illuminate\Support\Str;
+use drupol\phptree\Node\ValueNode;
 use Illuminate\Support\Collection;
 use drupol\phptree\Node\ValueNodeInterface;
-use drupol\phptree\Node\ValueNode;
-use Illuminate\Support\Str;
 use Neves\Events\Contracts\TransactionalEvent;
 use Neves\Events\Concerns\DelegatesToDispatcher;
 use Illuminate\Database\Events\TransactionBeginning;
@@ -125,7 +125,7 @@ final class TransactionalDispatcher implements DispatcherContract
     protected function onTransactionBegin() : void
     {
         $transactionNode = new ValueNode(new Collection());
-        
+
         $this->currentTransaction = is_null($this->currentTransaction)
             ? $transactionNode
             : $this->currentTransaction->add($transactionNode);
@@ -178,7 +178,8 @@ final class TransactionalDispatcher implements DispatcherContract
 
         if ($rolledBackTransaction->isRoot()) {
             $this->resetEvents();
-            return; 
+
+            return;
         }
 
         $this->nextEventIndex -= $rolledBackTransaction->getValue()->count();
@@ -196,7 +197,7 @@ final class TransactionalDispatcher implements DispatcherContract
         $eventsCount = $this->nextEventIndex;
         $this->resetEvents();
 
-        for($i = 0; $i < $eventsCount; $i++) {
+        for ($i = 0; $i < $eventsCount; $i++) {
             $event = $events[$i];
             $this->dispatcher->dispatch($event['event'], $event['payload']);
         }
@@ -222,7 +223,8 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return \drupol\phptree\Node\ValueNodeInterface
      */
-    private function finishTransaction() : ValueNodeInterface {
+    private function finishTransaction() : ValueNodeInterface
+    {
         $finished = $this->currentTransaction;
         $this->currentTransaction = $finished->getParent();
 
@@ -234,7 +236,8 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function resetEvents() : void {
+    private function resetEvents() : void
+    {
         $this->events = [];
         $this->nextEventIndex = 0;
     }

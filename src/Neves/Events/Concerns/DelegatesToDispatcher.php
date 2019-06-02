@@ -2,7 +2,8 @@
 
 namespace Neves\Events\Concerns;
 
-trait DelegatesToDispatcher {
+trait DelegatesToDispatcher
+{
     /**
      * Register an event listener with the dispatcher.
      *

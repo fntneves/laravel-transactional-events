@@ -292,8 +292,6 @@ class TransactionalDispatcherTest extends TestCase
         $this->assertEquals(1, $count);
     }
 
-    
-
     /**
      * Regression test: Nested multiple connections problems (#23).
      * @test
