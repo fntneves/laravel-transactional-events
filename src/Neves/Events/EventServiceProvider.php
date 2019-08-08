@@ -23,7 +23,7 @@ class EventServiceProvider extends ServiceProvider
             return;
         }
 
-        $this->app->afterResolving('db', function ($connectionResolver) {
+        $resolver = function () {
             $eventDispatcher = $this->app->make(EventDispatcher::class);
             $this->app->extend('events', function () use ($eventDispatcher) {
                 $dispatcher = new TransactionalDispatcher($eventDispatcher);
@@ -32,7 +32,13 @@ class EventServiceProvider extends ServiceProvider
 
                 return $dispatcher;
             });
-        });
+        };
+
+        if ($this->app->resolved('db')) {
+            $resolver();
+        } else {
+            $this->app->afterResolving('db', $resolver);
+        }
     }
 
     /**
