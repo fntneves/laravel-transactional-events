@@ -5,9 +5,9 @@
     "license": "MIT",
     "require": {
         "drupol/phptree": "^2.3",
-        "illuminate/database": "~5.8.0",
-        "illuminate/events": "~5.8.0",
-        "illuminate/support": "~5.8.0"
+        "illuminate/database": "~5.8.0|^6.0",
+        "illuminate/events": "~5.8.0|^6.0",
+        "illuminate/support": "~5.8.0|^6.0"
     },
     "authors": [
         {
@@ -33,6 +33,6 @@
         "sort-packages": true
     },
     "require-dev": {
-        "orchestra/testbench": "~3.8.0"
+        "orchestra/testbench": "~3.8.0|~3.9.0"
     }
 }
