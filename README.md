@@ -39,7 +39,7 @@ Please note that events dispatched out of transactions will bypass the transacti
  Laravel  | Package
 :---------|:----------
  5.5.x-5.7.x   | 1.4.x
- 5.8.x    | 1.8.x
+ 5.8.x-6.x     | 1.8.x
 
 * [Laravel](#laravel) (5.5+)
 * [Lumen](#lumen) (5.5+)
@@ -88,9 +88,15 @@ $app->register(Neves\Events\EventServiceProvider::class);
 
 ## Usage
 
-The transactional layer is enabled by default for the events placed under the `App\Events` namespace.
+The transactional layer is enabled out of the box for the events placed under the `App\Events` namespace.
 
-However, the easiest way to make your events behave as transactional events is by implementing the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
+Additionally, this package allows you to mark events as transactional in two ways:
+- Implement the `Neves\Events\Contracts\TransactionalEvent` contract (recommended)
+- Change the [configuration file](#configuration) provided by this package
+
+### Implement the contract, dude
+
+The easiest way to make your events behave as transactional events is by implementing the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
 *Note that events that implement it will behave as transactional events even when excluded in config.*
 
 ```php
