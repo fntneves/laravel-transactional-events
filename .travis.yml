@@ -13,6 +13,7 @@ cache:
 
 env:
   - LARAVEL_VERSION=5.8.* TESTBENCH_VERSION=3.8.*
+  - LARAVEL_VERSION=6.* TESTBENCH_VERSION=4.*
 
 before_script:
   - composer self-update
