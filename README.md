@@ -90,14 +90,14 @@ $app->register(Neves\Events\EventServiceProvider::class);
 
 The transactional layer is enabled out of the box for the events placed under the `App\Events` namespace.
 
-Additionally, this package allows you to mark events as transactional in two ways:
+Additionally, this package offers two ways to mark events as transactional:
 - Implement the `Neves\Events\Contracts\TransactionalEvent` contract (recommended)
 - Change the [configuration file](#configuration) provided by this package
 
-### Implement the contract, dude
+#### Use the contract, Luke:
 
 The easiest way to make your events behave as transactional events is by implementing the contract `Neves\Events\Contracts\TransactionalEvent`.<br/>
-*Note that events that implement it will behave as transactional events even when excluded in config.*
+*Note that events that implement it will behave as transactional events even when marked as excluded in config.*
 
 ```php
 namespace App\Events;
@@ -114,7 +114,6 @@ class TicketsOrdered implements TransactionalEvent
     ...
 }
 ```
-
 As this package does not require any changes in your code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
 
 ```php
@@ -140,10 +139,12 @@ Enable or disable the transactional behavior by changing the following property:
 By default, the transactional behavior will be applied to events on `App\Events` namespace. Feel free to use patterns and namespaces.
 
 ```php
-'transactional' => ['App\Events']
+'transactional' => [
+    'App\Events'
+]
 ```
 
-Choose the events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher. By default, all `*ed` Eloquent events are excluded.
+Choose the events that should always bypass the transactional layer, i.e., should be handled by the default event dispatcher. By default, all `*ed` Eloquent events are excluded. The main reason for this default value is to avoid interference with your already existing event listeners for Eloquent events.
 
 ```php
 'excluded' => [
@@ -160,11 +161,11 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
 
 ## Known issues
 
-> Transactional events are not dispatched in tests.
+####Transactional events are not dispatched in tests.
 
-**This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832)).**<br/>
-For previous versions, it is associated with the `RefreshDatabase` trait, namely when it uses database transactions to reset database after each test.
-This package relies on events dispached when transactions begin/commit/rollback and as each is executed within a transaction that rollbacks when test finishes, the dispatched application events are never actually dispatched. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` trait in your tests instead of the one originally provided by Laravel.
+**This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832)).**
+For previous versions, it is associated with the `RefreshDatabase` or `DatabaseTransactions` trait, namely when it uses database transactions to reset database after each test.
+This package relies on events dispached when transactions begin/commit/rollback and as each test is executed within a transaction that is rolled back when test finishes, the dispatched application events are never actually dispatched. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` or `Neves\Testing\DatabaseTransactions` trait in your tests instead of the ones originally provided by Laravel.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
