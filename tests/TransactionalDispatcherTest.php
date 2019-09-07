@@ -316,6 +316,36 @@ class TransactionalDispatcherTest extends TestCase
         $this->assertEquals('second', $_SERVER['__events'][1]);
     }
 
+    /**
+     * Regression test: Call to a member function getParent() on null (#27).
+     * This reproduces the use of DatabaseTransactions and RefreshDatabase traits.
+     * @test
+     */
+    public function it_ignores_commits_or_rollbacks_when_transactions_are_not_running()
+    {
+        $this->withoutEvents(function () {
+            DB::beginTransaction();
+        });
+
+        $this->dispatcher->listen('foo', function () {
+            throw new \Exception();
+        });
+
+        try {
+            DB::beginTransaction();
+            $this->dispatcher->dispatch('foo');
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+        }
+
+        $this->withoutEvents(function () {
+            DB::rollBack();
+        });
+
+        $this->assertTrue(true);
+    }
+
     protected function getPackageProviders($app)
     {
         // Add an event listener to the previous event dispatcher.
@@ -337,6 +367,21 @@ class TransactionalDispatcherTest extends TestCase
             'driver'   => 'sqlite',
             'database' => ':memory:',
         ]);
+    }
+
+    protected function withoutEvents(Closure $callback)
+    {
+        // Disable Transactional dispatcher.
+        DB::connection()->unsetEventDispatcher();
+
+        try {
+            $callback();
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            // Restore the Transactional dispatcher.
+            DB::connection()->setEventDispatcher($this->dispatcher);
+        }
     }
 }
 

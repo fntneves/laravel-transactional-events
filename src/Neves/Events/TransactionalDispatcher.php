@@ -158,6 +158,10 @@ final class TransactionalDispatcher implements DispatcherContract
      */
     private function onTransactionCommit() : void
     {
+        if (! $this->isTransactionRunning()) {
+            return;
+        }
+
         $committedTransaction = $this->finishTransaction();
 
         if (! $committedTransaction->isRoot()) {
@@ -174,6 +178,10 @@ final class TransactionalDispatcher implements DispatcherContract
      */
     private function onTransactionRollback() : void
     {
+        if (! $this->isTransactionRunning()) {
+            return;
+        }
+
         $rolledBackTransaction = $this->finishTransaction();
 
         if ($rolledBackTransaction->isRoot()) {
@@ -183,6 +191,20 @@ final class TransactionalDispatcher implements DispatcherContract
         }
 
         $this->nextEventIndex -= $rolledBackTransaction->getValue()->count();
+    }
+
+    /**
+     * Check whether there is at least one transaction running.
+     *
+     * @return bool
+     */
+    private function isTransactionRunning() : bool
+    {
+        if ($this->currentTransaction) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
