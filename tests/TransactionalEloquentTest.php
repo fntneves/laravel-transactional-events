@@ -1,7 +1,7 @@
 <?php
 
-use Orchestra\Testbench\TestCase;
 use Neves\Events\EventServiceProvider;
+use Orchestra\Testbench\TestCase;
 
 class TransactionalEloquentTest extends TestCase
 {

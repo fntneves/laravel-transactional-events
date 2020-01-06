@@ -1,9 +1,9 @@
 <?php
 
-use Orchestra\Testbench\TestCase;
+use Neves\Events\Contracts\TransactionalEvent;
 use Neves\Events\EventServiceProvider;
 use Neves\Events\TransactionalDispatcher;
-use Neves\Events\Contracts\TransactionalEvent;
+use Orchestra\Testbench\TestCase;
 
 class TransactionalDispatcherTest extends TestCase
 {
