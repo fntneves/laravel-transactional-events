@@ -4,7 +4,7 @@
     "type": "library",
     "license": "MIT",
     "require": {
-        "drupol/phptree": "^2.3",
+        "loophp/phptree": "^2.5",
         "illuminate/database": "~5.8.0|^6.0",
         "illuminate/events": "~5.8.0|^6.0",
         "illuminate/support": "~5.8.0|^6.0"

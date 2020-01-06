@@ -2,17 +2,17 @@
 
 namespace Neves\Events;
 
-use Illuminate\Support\Str;
-use drupol\phptree\Node\ValueNode;
-use Illuminate\Support\Collection;
-use drupol\phptree\Node\ValueNodeInterface;
-use Neves\Events\Contracts\TransactionalEvent;
-use Neves\Events\Concerns\DelegatesToDispatcher;
+use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
-use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\TransactionRolledBack;
-use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
+use Illuminate\Events\Dispatcher as EventDispatcher;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
+use loophp\phptree\Node\ValueNode;
+use loophp\phptree\Node\ValueNodeInterface;
+use Neves\Events\Concerns\DelegatesToDispatcher;
+use Neves\Events\Contracts\TransactionalEvent;
 
 final class TransactionalDispatcher implements DispatcherContract
 {
@@ -46,7 +46,7 @@ final class TransactionalDispatcher implements DispatcherContract
     /**
      * The current prepared transaction.
      *
-     * @var \drupol\phptree\Node\ValueNodeInterface
+     * @var \loophp\phptree\Node\ValueNodeInterface
      */
     private $currentTransaction;
 
@@ -81,7 +81,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  array|null  $transactional
      * @return void
      */
-    public function setTransactionalEvents(array $transactional) : void
+    public function setTransactionalEvents(array $transactional): void
     {
         $this->transactional = $transactional;
     }
@@ -92,7 +92,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  array  $excluded
      * @return void
      */
-    public function setExcludedEvents(array $excluded = []) : void
+    public function setExcludedEvents(array $excluded = []): void
     {
         $this->excluded = array_merge(['Illuminate\Database\Events'], $excluded);
     }
@@ -122,7 +122,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    protected function onTransactionBegin() : void
+    protected function onTransactionBegin(): void
     {
         $transactionNode = new ValueNode(new Collection());
 
@@ -140,7 +140,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  mixed $payload
      * @return void
      */
-    protected function addPendingEvent($event, $payload) : void
+    protected function addPendingEvent($event, $payload): void
     {
         $eventData = [
             'event' => $event,
@@ -156,7 +156,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function onTransactionCommit() : void
+    private function onTransactionCommit(): void
     {
         if (! $this->isTransactionRunning()) {
             return;
@@ -176,7 +176,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function onTransactionRollback() : void
+    private function onTransactionRollback(): void
     {
         if (! $this->isTransactionRunning()) {
             return;
@@ -198,7 +198,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return bool
      */
-    private function isTransactionRunning() : bool
+    private function isTransactionRunning(): bool
     {
         if ($this->currentTransaction) {
             return true;
@@ -212,7 +212,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function dispatchPendingEvents() : void
+    private function dispatchPendingEvents(): void
     {
         // Prevent loops on event dispacthing. (See #12)
         $events = $this->events;
@@ -231,7 +231,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  string|object $event
      * @return bool
      */
-    private function isTransactionalEvent($event) : bool
+    private function isTransactionalEvent($event): bool
     {
         if (is_null($this->currentTransaction)) {
             return false;
@@ -243,9 +243,9 @@ final class TransactionalDispatcher implements DispatcherContract
     /**
      * Finish current transaction.
      *
-     * @return \drupol\phptree\Node\ValueNodeInterface
+     * @return \loophp\phptree\Node\ValueNodeInterface
      */
-    private function finishTransaction() : ValueNodeInterface
+    private function finishTransaction(): ValueNodeInterface
     {
         $finished = $this->currentTransaction;
         $this->currentTransaction = $finished->getParent();
@@ -258,7 +258,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function resetEvents() : void
+    private function resetEvents(): void
     {
         $this->events = [];
         $this->nextEventIndex = 0;
@@ -270,7 +270,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  string|object  $event
      * @return bool
      */
-    private function shouldHandle($event) : bool
+    private function shouldHandle($event): bool
     {
         if ($event instanceof TransactionalEvent) {
             return true;
@@ -300,7 +300,7 @@ final class TransactionalDispatcher implements DispatcherContract
      * @param  string  $event
      * @return bool
      */
-    private function matches($pattern, $event) : bool
+    private function matches($pattern, $event): bool
     {
         return (Str::contains($pattern, '*') && Str::is($pattern, $event))
             || Str::startsWith($event, $pattern);
@@ -311,7 +311,7 @@ final class TransactionalDispatcher implements DispatcherContract
      *
      * @return void
      */
-    private function setUpListeners() : void
+    private function setUpListeners(): void
     {
         $this->dispatcher->listen(TransactionBeginning::class, function () {
             $this->onTransactionBegin();
