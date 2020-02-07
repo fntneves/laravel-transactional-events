@@ -14,7 +14,7 @@ use loophp\phptree\Node\ValueNodeInterface;
 use Neves\Events\Concerns\DelegatesToDispatcher;
 use Neves\Events\Contracts\TransactionalEvent;
 
-final class TransactionalDispatcher implements DispatcherContract
+class TransactionalDispatcher implements DispatcherContract
 {
     use DelegatesToDispatcher;
 
