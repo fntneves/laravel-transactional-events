@@ -1,14 +1,17 @@
 # Transaction-aware Event Dispatcher for Laravel (and Lumen)
 
+[![Latest Stable Version](https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable)](https://packagist.org/packages/fntneves/laravel-transactional-events)
 <a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
-<a href="https://packagist.org/packages/fntneves/laravel-transactional-events"><img src="https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable" alt="Latest Stable Version"></a>
+<a href="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/?branch=master"><img src="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/badges/quality-score.png?b=master" alt="Scrutinizer Code Quality"></a>
+[![Total Downloads](https://poser.pugx.org/fntneves/laravel-transactional-events/downloads)](https://packagist.org/packages/fntneves/laravel-transactional-events)
 
-This package introduces a transactional layer to the Laravel Event Dispatcher. Its purpose is to ensure, without changing a single line of code, consistency between events dispatched and database transactions. This behavior is also applicable to Eloquent events, such as `saved` and `created`.
+This package introduces a transactional layer to Laravel Event Dispatcher.<br/>
+Out of the box, it ensures consistency between events dispatched and database transactions.
 
 * [Introduction](#introduction)
 * [Installation](#installation)
-    * [Laravel](#laravel) (5.5+)
-    * [Lumen](#lumen) (5.5+)
+    * [Laravel](#laravel)
+    * [Lumen](#lumen)
 * [Usage](#usage)
 * [Configuration](#configuration)
 
@@ -39,7 +42,7 @@ Please note that events dispatched out of transactions will bypass the transacti
  Laravel  | Package
 :---------|:----------
  5.5.x-5.7.x   | 1.4.x
- 5.8.x-6.x     | 1.8.x
+ 5.8.x-7.x     | 1.8.x
 
 * [Laravel](#laravel) (5.5+)
 * [Lumen](#lumen) (5.5+)

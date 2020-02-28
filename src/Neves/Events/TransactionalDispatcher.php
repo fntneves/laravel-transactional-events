@@ -126,9 +126,9 @@ final class TransactionalDispatcher implements DispatcherContract
     {
         $transactionNode = new ValueNode(new Collection());
 
-        $this->currentTransaction = is_null($this->currentTransaction)
-            ? $transactionNode
-            : $this->currentTransaction->add($transactionNode);
+        $this->currentTransaction = $this->isTransactionRunning()
+            ? $this->currentTransaction->add($transactionNode)
+            : $transactionNode;
 
         $this->currentTransaction = $transactionNode;
     }
@@ -233,7 +233,7 @@ final class TransactionalDispatcher implements DispatcherContract
      */
     private function isTransactionalEvent($event): bool
     {
-        if (is_null($this->currentTransaction)) {
+        if (! $this->isTransactionRunning()) {
             return false;
         }
 
@@ -278,12 +278,38 @@ final class TransactionalDispatcher implements DispatcherContract
 
         $event = is_string($event) ? $event : get_class($event);
 
+        if ($this->matchesExcludePatterns($event)) {
+            return false;
+        }
+
+        return $this->matchesTransactionalPatterns($event);
+    }
+
+    /**
+     * Check whether the given event matches the exclude patterns or not.
+     *
+     * @param  string $event
+     * @return bool
+     */
+    private function matchesExcludePatterns($event)
+    {
         foreach ($this->excluded as $excluded) {
             if ($this->matches($excluded, $event)) {
-                return false;
+                return true;
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Check whether the given event matches the transactional patterns or not.
+     *
+     * @param  string $event
+     * @return bool
+     */
+    private function matchesTransactionalPatterns($event)
+    {
         foreach ($this->transactional as $transactionalEvent) {
             if ($this->matches($transactionalEvent, $event)) {
                 return true;
