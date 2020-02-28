@@ -323,7 +323,7 @@ class TransactionalDispatcherTest extends TestCase
      */
     public function it_ignores_commits_or_rollbacks_when_transactions_are_not_running()
     {
-        $this->withoutEvents(function () {
+        $this->withoutTransactionEvents(function () {
             DB::beginTransaction();
         });
 
@@ -339,7 +339,7 @@ class TransactionalDispatcherTest extends TestCase
             DB::rollBack();
         }
 
-        $this->withoutEvents(function () {
+        $this->withoutTransactionEvents(function () {
             DB::rollBack();
         });
 
@@ -369,7 +369,7 @@ class TransactionalDispatcherTest extends TestCase
         ]);
     }
 
-    protected function withoutEvents(Closure $callback)
+    protected function withoutTransactionEvents(Closure $callback)
     {
         // Disable Transactional dispatcher.
         DB::connection()->unsetEventDispatcher();
