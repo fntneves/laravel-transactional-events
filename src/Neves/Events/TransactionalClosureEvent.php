@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Neves\Events;
-
 
 use Closure;
 use Neves\Events\Contracts\TransactionalEvent;
@@ -16,7 +14,8 @@ class TransactionalClosureEvent implements TransactionalEvent
         $this->closure = $closure;
     }
 
-    public function getClosure(): Closure {
+    public function getClosure(): Closure
+    {
         return $this->closure;
     }
 }

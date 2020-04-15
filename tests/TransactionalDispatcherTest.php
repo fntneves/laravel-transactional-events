@@ -273,7 +273,7 @@ class TransactionalDispatcherTest extends TestCase
     public function it_provides_transactional_behavior_of_custom_closures()
     {
         DB::transaction(function () {
-            $this->dispatcher->dispatch(new TransactionalClosureEvent(function() {
+            $this->dispatcher->dispatch(new TransactionalClosureEvent(function () {
                 $_SERVER['__events'] = 'bar';
             }));
 
@@ -287,7 +287,7 @@ class TransactionalDispatcherTest extends TestCase
     public function it_provides_transactional_behavior_of_custom_closures_using_transactional_helper()
     {
         DB::transaction(function () {
-            transactional(function() {
+            transactional(function () {
                 $_SERVER['__events'] = 'bar';
             });
 
