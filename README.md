@@ -102,7 +102,7 @@ The transactional layer is enabled out of the box for the events placed under th
 
 Additionally, this package offers three distinct ways to execute transactional-aware events or custom behavior:
 - Implement the `Neves\Events\Contracts\TransactionalEvent` contract
-- Use the `transactional` helper to pass a custom closure to be executed once transaction commits
+- Use the provided `TransactionalClosureEvent` event to pass a custom closure to be executed once transaction commits
 - Change the [configuration file](#configuration) provided by this package (not recommended)
 
 #### Use the contract, Luke:
@@ -139,7 +139,7 @@ Even if you are using queues, they will still work smothly because this package 
 
 #### What about Jobs?
 
-In version **1.8.8**, this package introduced the `transactional` helper for applying the same behavior to custom instructions without the need to create a specific event.
+This package provides the `TransactionalClosureEvent` event for applying the same behavior to your custom instructions without the need to create your specific event.
 
 This helper can be used to ensure that Jobs are dispatched only after the transaction successfully commits:
 
@@ -147,7 +147,7 @@ This helper can be used to ensure that Jobs are dispatched only after the transa
 DB::transaction(function () {
     ...
 
-    transactional(function () {
+    dispatch(new TransactionalClosureEvent(function () {
         // Job will be dispatched only if the transaction commits. 
         ProcessOrderShippingJob::dispatch($order);
     });
@@ -155,8 +155,6 @@ DB::transaction(function () {
     ...
 });
 ```
-
-Under the hood, it creates a *TransactionalClosureEvent* event provided by this package.
 
 
 ## Configuration
@@ -195,7 +193,7 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
 
 #### Can I use it for Jobs?
 
-Yes. From version **1.8.8**, as mentioned in [Usage](#usage) section, you can use the `transactional(Closure $callable)` helper to trigger jobs only after the transaction commits.
+Yes. As mentioned in [Usage](#usage) section, you can use the provided `TransactionalClosureEvent((Closure $callable)` event to trigger jobs only after the transaction commits.
 
 ## Known issues
 

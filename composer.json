@@ -18,10 +18,7 @@
     "autoload": {
         "psr-0": {
             "Neves\\": "src/"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
+        }
     },
     "extra": {
         "laravel": {

@@ -283,20 +283,6 @@ class TransactionalDispatcherTest extends TestCase
         $this->assertEquals('bar', $_SERVER['__events']);
     }
 
-    /** @test */
-    public function it_provides_transactional_behavior_of_custom_closures_using_transactional_helper()
-    {
-        DB::transaction(function () {
-            transactional(function () {
-                $_SERVER['__events'] = 'bar';
-            });
-
-            $this->assertArrayNotHasKey('__events', $_SERVER);
-        });
-
-        $this->assertEquals('bar', $_SERVER['__events']);
-    }
-
     /**
      * Regression test: Fix infinite loop caused by TransactionCommitted (#12).
      * @test
