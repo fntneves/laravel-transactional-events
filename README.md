@@ -139,19 +139,17 @@ Even if you are using queues, they will still work smothly because this package 
 
 #### What about Jobs?
 
-This package provides the `TransactionalClosureEvent` event for applying the same behavior to your custom instructions without the need to create your specific event.
+Out of the box, this package provides the `TransactionalClosureEvent` event for applying the same behavior to your custom instructions without the need to create your specific event.
 
-This helper can be used to ensure that Jobs are dispatched only after the transaction successfully commits:
+This event can be used to ensure that Jobs are dispatched only after the transaction successfully commits:
 
 ```php
 DB::transaction(function () {
     ...
-
     Event::dispatch(new TransactionalClosureEvent(function () {
         // Job will be dispatched only if the transaction commits. 
         ProcessOrderShippingJob::dispatch($order);
     });
-
     ...
 });
 ```
@@ -193,7 +191,7 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
 
 #### Can I use it for Jobs?
 
-Yes. As mentioned in [Usage](#usage) section, you can use the provided `TransactionalClosureEvent((Closure $callable)` event to trigger jobs only after the transaction commits.
+Yes. As mentioned in [Usage](#usage) section, you can use the provided `TransactionalClosureEvent(Closure $callable)` event to trigger jobs only after the transaction commits.
 
 ## Known issues
 
