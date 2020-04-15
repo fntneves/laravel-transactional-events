@@ -147,7 +147,7 @@ This helper can be used to ensure that Jobs are dispatched only after the transa
 DB::transaction(function () {
     ...
 
-    dispatch(new TransactionalClosureEvent(function () {
+    Event::dispatch(new TransactionalClosureEvent(function () {
         // Job will be dispatched only if the transaction commits. 
         ProcessOrderShippingJob::dispatch($order);
     });
