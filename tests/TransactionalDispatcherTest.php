@@ -2,6 +2,7 @@
 
 use Neves\Events\Contracts\TransactionalEvent;
 use Neves\Events\EventServiceProvider;
+use Neves\Events\TransactionalClosureEvent;
 use Neves\Events\TransactionalDispatcher;
 use Orchestra\Testbench\TestCase;
 
@@ -266,6 +267,34 @@ class TransactionalDispatcherTest extends TestCase
             $this->assertEquals('bar', $_SERVER['__events.bar']);
             $this->assertArrayNotHasKey('__env.test.zen', $_SERVER);
         });
+    }
+
+    /** @test */
+    public function it_provides_transactional_behavior_of_custom_closures()
+    {
+        DB::transaction(function () {
+            $this->dispatcher->dispatch(new TransactionalClosureEvent(function() {
+                $_SERVER['__events'] = 'bar';
+            }));
+
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
+
+        $this->assertEquals('bar', $_SERVER['__events']);
+    }
+
+    /** @test */
+    public function it_provides_transactional_behavior_of_custom_closures_using_transactional_helper()
+    {
+        DB::transaction(function () {
+            transactional(function() {
+                $_SERVER['__events'] = 'bar';
+            });
+
+            $this->assertArrayNotHasKey('__events', $_SERVER);
+        });
+
+        $this->assertEquals('bar', $_SERVER['__events']);
     }
 
     /**

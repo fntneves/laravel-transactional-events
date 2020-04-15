@@ -27,6 +27,9 @@ class EventServiceProvider extends ServiceProvider
             $eventDispatcher = $this->app->make(EventDispatcher::class);
             $this->app->extend('events', function () use ($eventDispatcher) {
                 $dispatcher = new TransactionalDispatcher($eventDispatcher);
+                $dispatcher->listen(TransactionalClosureEvent::class, function(TransactionalClosureEvent $event) {
+                    ($event->getClosure())();
+                });
                 $dispatcher->setTransactionalEvents($this->app['config']->get('transactional-events.transactional'));
                 $dispatcher->setExcludedEvents($this->app['config']->get('transactional-events.excluded'));
 

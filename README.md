@@ -5,8 +5,10 @@
 <a href="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/?branch=master"><img src="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/badges/quality-score.png?b=master" alt="Scrutinizer Code Quality"></a>
 [![Total Downloads](https://poser.pugx.org/fntneves/laravel-transactional-events/downloads)](https://packagist.org/packages/fntneves/laravel-transactional-events)
 
-This package introduces a transactional layer to Laravel Event Dispatcher.<br/>
-Out of the box, it ensures consistency between events dispatched and database transactions.
+
+This package adds a transaction-aware layer on top of the Laravel Event Dispatcher.<br/>
+Basically, it holds events dispatched in a database transaction until the transaction successfully commits.<br/>
+In case of transaction failure, the events are discarded and never dispatched. 
 
 * [Introduction](#introduction)
 * [Installation](#installation)
@@ -14,10 +16,13 @@ Out of the box, it ensures consistency between events dispatched and database tr
     * [Lumen](#lumen)
 * [Usage](#usage)
 * [Configuration](#configuration)
+* [F.A.Q.](#frequently-asked-questions)
+* [Known Issues](#known-issues)
 
 ## Introduction
 
-Let's start with a simple example of ordering tickets. Assume that it involves database changes and a payment registration and that the custom event `OrderWasProcessed` is dispatched immediately after the order is processed in the database.
+Consider the following example of ordering tickets that involves database changes and payment operation.
+The custom event `OrderWasProcessed` is dispatched immediately after the order is processed in the database.
 
 ```php
 DB::transaction(function() {
@@ -29,9 +34,11 @@ DB::transaction(function() {
 });
 ```
 
-The transaction in the above example may fail for several reasons: an exception may occur in the `orderTickets` method or in the payment service or simply due to a deadlock.
+The transaction in the above example may fail due to several reasons. For instance, due to an exception in the `orderTickets` method or cause by the Payment Service package or simply due to a deadlock.
 
-A failure will rollback the database changes made during the transaction. However, this is not true for the `OrderWasProcessed` event, which is actually dispatched and eventually executed. Considering that this event may result in sending an e-mail with the order confirmation, managing it the right way becomes mandatory.
+The failed transaction will undo the database changes performed during the transaction.
+This is not true however for the `OrderWasProcessed` event, which was dispatched and eventually executed or enqueued. 
+Preventing the event to be dispatch may prevent embarrassing situations like confirmation emails sent after orders failure.
 
 The purpose of this package is to actually dispatch events **if and only if** the transaction in which they were dispatched commits. For instance, in the above example the `OrderWasProcessed` event would not be dispatched if the transaction fails.
 
@@ -93,9 +100,10 @@ $app->register(Neves\Events\EventServiceProvider::class);
 
 The transactional layer is enabled out of the box for the events placed under the `App\Events` namespace.
 
-Additionally, this package offers two ways to mark events as transactional:
-- Implement the `Neves\Events\Contracts\TransactionalEvent` contract (recommended)
-- Change the [configuration file](#configuration) provided by this package
+Additionally, this package offers three distinct ways to execute transactional-aware events or custom behavior:
+- Implement the `Neves\Events\Contracts\TransactionalEvent` contract
+- Use the `transactional` helper to pass a custom closure to be executed once transaction commits
+- Change the [configuration file](#configuration) provided by this package (not recommended)
 
 #### Use the contract, Luke:
 
@@ -117,7 +125,7 @@ class TicketsOrdered implements TransactionalEvent
     ...
 }
 ```
-As this package does not require any changes in your code, you are still able to use the `Event` facade and call the `event()` or `broadcast()` helper to dispatch an event:
+As this package does not require any changes in your code, you are to use `Event` facade, call the `event()` or `broadcast()` helper to dispatch an event as follows:
 
 ```php
 Event::dispatch(new App\Event\TicketsOrdered) // Using Event facade
@@ -128,6 +136,27 @@ broadcast(new App\Event\TicketsOrdered) // Using broadcast() helper method
 Even if you are using queues, they will still work smothly because this package does not change the core behavior of the event dispatcher. They will be enqueued as soon as the active transaction succeeds. Otherwise, they will be discarded.
 
 **Reminder:** Events are considered transactional when they are dispatched within transactions. When an event is dispatched out of transactions, it bypasses the transactional layer.
+
+#### What about Jobs?
+
+In version **1.8.8**, this package introduced the `transactional` helper for applying the same behavior to custom instructions without the need to create a specific event.
+
+This helper can be used to ensure that Jobs are dispatched only after the transaction successfully commits:
+
+```php
+DB::transaction(function () {
+    ...
+
+    transactional(function () {
+        // Job will be dispatched only if the transaction commits. 
+        ProcessOrderShippingJob::dispatch($order);
+    });
+
+    ...
+});
+```
+
+Under the hood, it creates a *TransactionalClosureEvent* event provided by this package.
 
 
 ## Configuration
@@ -161,6 +190,12 @@ Choose the events that should always bypass the transactional layer, i.e., shoul
     'eloquent.restored',
 ],
 ```
+
+## Frequently Asked Questions
+
+#### Can I use it for Jobs?
+
+Yes. From version **1.8.8**, as mentioned in [Usage](#usage) section, you can use the `transactional(Closure $callable)` helper to trigger jobs only after the transaction commits.
 
 ## Known issues
 
