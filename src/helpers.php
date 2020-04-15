@@ -5,7 +5,7 @@ use Neves\Events\TransactionalClosureEvent;
 
 if (! function_exists('transactional')) {
     /**
-     * Add an element to an array using "dot" notation if it doesn't exist.
+     * Build a transactional event for the given closure.
      *
      * @param \Closure $callable
      * @return void
