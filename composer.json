@@ -1,6 +1,6 @@
 {
     "name": "fntneves/laravel-transactional-events",
-    "description": "Transactional layer for Laravel Event Dispatcher",
+    "description": "Transaction-aware Event Dispatcher for Laravel",
     "type": "library",
     "license": "MIT",
     "require": {
@@ -12,7 +12,7 @@
     "authors": [
         {
             "name": "Francisco Neves",
-            "email": "hello@neves.info"
+            "email": "hey@francisconeves.com"
         }
     ],
     "autoload": {
