@@ -18,7 +18,6 @@ It ensures the events dispatched within a database transaction are dispatched on
 * [Usage](#usage)
 * [Configuration](#configuration)
 * [F.A.Q.](#frequently-asked-questions)
-* [Known Issues](#known-issues)
 
 ## Motivation
 
@@ -46,7 +45,6 @@ In the above example the `OrderCreated` event would never be dispatched in the c
 
  Laravel  | Package
 :---------|:----------
- 5.5.x-5.7.x   | 1.4.x
  5.8.x-7.x     | 1.8.x
 
 ### Laravel
@@ -173,14 +171,6 @@ Choose the events that should always bypass the transaction-aware layer, i.e., s
 #### Can I use it for Jobs?
 
 Yes. As mentioned in [Usage](#usage), you can use the generic `TransactionalClosureEvent(Closure $callable)` event to trigger jobs only after the transaction commits.
-
-## Known issues
-
-#### Transaction-aware events are not dispatched in tests.
-
-**This issue is fixed for Laravel 5.6.16+ (see [#23832](https://github.com/laravel/framework/pull/23832)).**
-For previous versions, it is associated with the `RefreshDatabase` or `DatabaseTransactions` trait, namely when it uses database transactions to reset database after each test.
-This package relies on events dispached when transactions begin/commit/rollback and as each test is executed within a transaction that is rolled back when test finishes, the dispatched application events are never actually dispatched. In order to get the expected behavior, use the `Neves\Testing\RefreshDatabase` or `Neves\Testing\DatabaseTransactions` trait in your tests instead of the ones originally provided by Laravel.
 
 ## License
 This package is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
