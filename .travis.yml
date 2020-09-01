@@ -8,7 +8,6 @@ php:
 
 cache:
   directories:
-    - ./vendor
     - $HOME/.composer/cache
 
 env:
