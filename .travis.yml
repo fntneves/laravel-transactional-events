@@ -1,8 +1,6 @@
 language: php
 
 php:
-  - 7.1
-  - 7.2
   - 7.3
   - 7.4
 
@@ -11,21 +9,8 @@ cache:
     - $HOME/.composer/cache
 
 env:
-  - LARAVEL_VERSION=5.8.* TESTBENCH_VERSION=3.8.*
-  - LARAVEL_VERSION=6.* TESTBENCH_VERSION=4.*
-  - LARAVEL_VERSION=7.* TESTBENCH_VERSION=5.*
   - LARAVEL_VERSION=8.* TESTBENCH_VERSION=6.*
 
-matrix:
-  exclude:
-    - php: 7.1
-      env: LARAVEL_VERSION=6.* TESTBENCH_VERSION=4.*
-    - php: 7.1
-      env: LARAVEL_VERSION=7.* TESTBENCH_VERSION=5.*
-    - php: 7.1
-      env: LARAVEL_VERSION=8.* TESTBENCH_VERSION=6.*
-    - php: 7.2
-      env: LARAVEL_VERSION=8.* TESTBENCH_VERSION=6.*
 
 before_script:
   - composer self-update
