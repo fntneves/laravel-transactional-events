@@ -7,7 +7,7 @@
 
 
 This Laravel package introduces Transaction-aware Event Dispatcher.<br>
-It ensures the events dispatched within a database transaction are dispatched only if the outer transaction successfully commits. Otherwise, the events are discarded and never dispatched. 
+It ensures the events dispatched within a database transaction are dispatched only if the outer transaction successfully commits. Otherwise, the events are discarded and never dispatched.
 
 ## Table of Contents
 
@@ -35,7 +35,7 @@ DB::transaction(function() {
 
 In the case of transaction failure, due to an exception in the `orderTickets` method or even a deadlock, the database changes are completely discarded.
 
-Unfortunately, this is not true for the already dispatched `OrderCreated` event. 
+Unfortunately, this is not true for the already dispatched `OrderCreated` event.
 This results in sending the order confirmation email to the user, even after the order failure.
 
 The purpose of this package is thus to hold events dispatched within a database transaction until it successfully commits.
@@ -92,6 +92,7 @@ The transaction-aware layer is enabled out of the box for the events under the `
 This package offers three distinct ways to dispatch transaction-aware events:
 - Implement the `Neves\Events\Contracts\TransactionalEvent` contract;
 - Use the generic `TransactionalClosureEvent` event;
+- Use the `Neves\Events\transactional` helper;
 - Change the [configuration file](#configuration).
 
 #### Use the contract, Luke:
@@ -126,13 +127,14 @@ One relevant use case is to ensure that Jobs are dispatched only after the trans
 DB::transaction(function () {
     ...
     Event::dispatch(new TransactionalClosureEvent(function () {
-        // Job will be dispatched only if the transaction commits. 
+        // Job will be dispatched only if the transaction commits.
         ProcessOrderShippingJob::dispatch($order);
     });
     ...
 });
 ```
 
+And that's it. There are no further changes required.
 
 ## Configuration
 
