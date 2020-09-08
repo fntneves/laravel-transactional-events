@@ -3,7 +3,6 @@
 use Neves\Events\Contracts\TransactionalEvent;
 use Neves\Events\EventServiceProvider;
 use function Neves\Events\transactional;
-use function Neves\Events\transactional;
 use Neves\Events\TransactionalClosureEvent;
 use Neves\Events\TransactionalDispatcher;
 use Orchestra\Testbench\TestCase;
