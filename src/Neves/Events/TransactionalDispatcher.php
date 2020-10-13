@@ -6,7 +6,6 @@ use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Database\Events\TransactionRolledBack;
-use Illuminate\Events\Dispatcher as EventDispatcher;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use loophp\phptree\Node\ValueNode;
@@ -69,7 +68,7 @@ class TransactionalDispatcher implements DispatcherContract
      *
      * @param  \Illuminate\Contracts\Events\Dispatcher  $eventDispatcher
      */
-    public function __construct(EventDispatcher $eventDispatcher)
+    public function __construct(DispatcherContract $eventDispatcher)
     {
         $this->dispatcher = $eventDispatcher;
         $this->setUpListeners();
