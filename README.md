@@ -8,7 +8,7 @@
 This Laravel package introduces Transaction-aware Event Dispatcher.<br>
 It ensures the events dispatched within a database transaction are dispatched only if the outer transaction successfully commits. Otherwise, the events are discarded and never dispatched.
 
-*Note:* [Laravel 8.17](https://laravel-news.com/laravel-8-17-0) introduced a new method `DB::afterCommit` that allows one to achieve the same of this package. Yet, it falls short in providing the transaction-aware behavior on Eloquent events.
+*Note: [Laravel 8.17](https://laravel-news.com/laravel-8-17-0) introduced a new method `DB::afterCommit` that allows one to achieve the same of this package. Yet, it falls short of providing the transaction-aware behavior on Eloquent events.*
 
 ## Table of Contents
 
