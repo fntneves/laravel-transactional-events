@@ -19,7 +19,7 @@ trait DelegatesToDispatcher
     /**
      * Determine if a given event has listeners.
      *
-     * @param  string $eventName
+     * @param  string  $eventName
      * @return bool
      */
     public function hasListeners($eventName)
@@ -30,7 +30,7 @@ trait DelegatesToDispatcher
     /**
      * Register an event subscriber with the dispatcher.
      *
-     * @param  object|string $subscriber
+     * @param  object|string  $subscriber
      * @return void
      */
     public function subscribe($subscriber)
@@ -41,8 +41,8 @@ trait DelegatesToDispatcher
     /**
      * Dispatch an event until the first non-null response is returned.
      *
-     * @param  string|object $event
-     * @param  mixed $payload
+     * @param  string|object  $event
+     * @param  mixed  $payload
      * @return array|null
      */
     public function until($event, $payload = [])
@@ -66,8 +66,8 @@ trait DelegatesToDispatcher
     /**
      * Register an event and payload to be fired later.
      *
-     * @param  string $event
-     * @param  array $payload
+     * @param  string  $event
+     * @param  array  $payload
      * @return void
      */
     public function push($event, $payload = [])
@@ -78,7 +78,7 @@ trait DelegatesToDispatcher
     /**
      * Flush a set of pushed events.
      *
-     * @param  string $event
+     * @param  string  $event
      * @return void
      */
     public function flush($event)
@@ -89,7 +89,7 @@ trait DelegatesToDispatcher
     /**
      * Remove a set of listeners from the dispatcher.
      *
-     * @param  string $event
+     * @param  string  $event
      * @return void
      */
     public function forget($event)
@@ -111,7 +111,7 @@ trait DelegatesToDispatcher
      * Dynamically pass methods to the default dispatcher.
      *
      * @param  string  $method
-     * @param  array   $parameters
+     * @param  array  $parameters
      * @return mixed
      */
     public function __call($method, $parameters)

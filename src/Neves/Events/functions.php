@@ -9,7 +9,7 @@ if (! function_exists('Neves\Events\transactional')) {
     /**
      * Build a transactional event for the given closure.
      *
-     * @param \Closure $callable
+     * @param  \Closure  $callable
      * @return void
      */
     function transactional(Closure $callable)

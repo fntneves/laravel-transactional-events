@@ -300,6 +300,7 @@ class TransactionalDispatcherTest extends TestCase
 
     /**
      * Regression test: Fix infinite loop caused by TransactionCommitted (#12).
+     *
      * @test
      */
     public function nested_transactions_on_dispatch_does_not_cause_infinite_loop()
@@ -324,6 +325,7 @@ class TransactionalDispatcherTest extends TestCase
 
     /**
      * Regression test: Nested multiple connections problems (#23).
+     *
      * @test
      */
     public function it_works_with_non_default_connections()
@@ -349,6 +351,7 @@ class TransactionalDispatcherTest extends TestCase
     /**
      * Regression test: Call to a member function getParent() on null (#27).
      * This reproduces the use of DatabaseTransactions and RefreshDatabase traits.
+     *
      * @test
      */
     public function it_ignores_commits_or_rollbacks_when_transactions_are_not_running()

@@ -99,9 +99,9 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Dispatch an event and call the listeners.
      *
-     * @param  string|object $event
-     * @param  mixed $payload
-     * @param  bool $halt
+     * @param  string|object  $event
+     * @param  mixed  $payload
+     * @param  bool  $halt
      * @return array|null
      */
     public function dispatch($event, $payload = [], $halt = false)
@@ -135,8 +135,8 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Add a pending transactional event to the current transaction.
      *
-     * @param  string|object $event
-     * @param  mixed $payload
+     * @param  string|object  $event
+     * @param  mixed  $payload
      * @return void
      */
     protected function addPendingEvent($event, $payload): void
@@ -227,7 +227,7 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Check whether an event is a transactional event or not.
      *
-     * @param  string|object $event
+     * @param  string|object  $event
      * @return bool
      */
     private function isTransactionalEvent($event): bool
@@ -287,7 +287,7 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Check whether the given event matches the exclude patterns or not.
      *
-     * @param  string $event
+     * @param  string  $event
      * @return bool
      */
     private function matchesExcludePatterns($event)
@@ -304,7 +304,7 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Check whether the given event matches the transactional patterns or not.
      *
-     * @param  string $event
+     * @param  string  $event
      * @return bool
      */
     private function matchesTransactionalPatterns($event)
