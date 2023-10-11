@@ -1,8 +1,6 @@
 # Transaction-aware Event Dispatcher for Laravel
 
 [![Latest Stable Version](https://poser.pugx.org/fntneves/laravel-transactional-events/v/stable)](https://packagist.org/packages/fntneves/laravel-transactional-events)
-<a href="https://travis-ci.org/fntneves/laravel-transactional-events"><img src="https://travis-ci.org/fntneves/laravel-transactional-events.svg?branch=master" alt="TravisCI Status"></a>
-<a href="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/?branch=master"><img src="https://scrutinizer-ci.com/g/fntneves/laravel-transactional-events/badges/quality-score.png?b=master" alt="Scrutinizer Code Quality"></a>
 [![Total Downloads](https://poser.pugx.org/fntneves/laravel-transactional-events/downloads)](https://packagist.org/packages/fntneves/laravel-transactional-events)
 
 This Laravel package introduces Transaction-aware Event Dispatcher.<br>
