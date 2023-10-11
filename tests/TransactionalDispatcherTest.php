@@ -304,7 +304,7 @@ class TransactionalDispatcherTest extends TestCase
      *
      * @test
      */
-    public function nested_transactions_on_dispatch_does_not_cause_infinite_loop()
+    public function it_does_not_have_an_infinite_loop_while_dispatching_events_from_nested_transactions()
     {
         $count = 0;
         $this->dispatcher->listen('foo', function () use (&$count) {
