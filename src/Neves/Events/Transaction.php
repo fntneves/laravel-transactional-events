@@ -31,11 +31,6 @@ class Transaction
         return $this->parent !== null;
     }
 
-    public function getDispatchedEvents(): Collection
-    {
-        return $this->dispatchedEvents;
-    }
-
     public function addDispatchedEvent($event)
     {
         $this->dispatchedEvents->push($event);
