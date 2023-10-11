@@ -2,9 +2,10 @@
 
 namespace Neves\Events;
 
-use Illuminate\Support\Collection as Collection;
+use Illuminate\Support\Collection;
 
-class Transaction {
+class Transaction
+{
     private Collection $dispatchedEvents;
 
     private ?Transaction $parent;
@@ -15,24 +16,28 @@ class Transaction {
         $this->parent = $parent;
     }
 
-    public function setParent(Transaction $parent){
+    public function setParent(Transaction $parent)
+    {
         $this->parent = $parent;
     }
 
-    public function getParent(){
+    public function getParent()
+    {
         return $this->parent;
     }
 
-    public function hasParent(){
+    public function hasParent()
+    {
         return $this->parent !== null;
     }
 
-    public function getDispatchedEvents() : Collection
+    public function getDispatchedEvents(): Collection
     {
         return $this->dispatchedEvents;
     }
 
-    public function addDispatchedEvent($event) {
+    public function addDispatchedEvent($event)
+    {
         $this->dispatchedEvents->push($event);
     }
 
