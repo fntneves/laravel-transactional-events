@@ -6,10 +6,7 @@ use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
 use Illuminate\Database\Events\TransactionRolledBack;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use loophp\phptree\Node\ValueNode;
-use loophp\phptree\Node\ValueNodeInterface;
 use Neves\Events\Concerns\DelegatesToDispatcher;
 use Neves\Events\Contracts\TransactionalEvent;
 
@@ -45,7 +42,7 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * The current prepared transaction.
      *
-     * @var \loophp\phptree\Node\ValueNodeInterface
+     * @var \Neves\Events\Transaction
      */
     private $currentTransaction;
 
@@ -123,11 +120,11 @@ class TransactionalDispatcher implements DispatcherContract
      */
     protected function onTransactionBegin(): void
     {
-        $transactionNode = new ValueNode(new Collection());
+        $transactionNode = new Transaction();
 
-        $this->currentTransaction = $this->isTransactionRunning()
-            ? $this->currentTransaction->add($transactionNode)
-            : $transactionNode;
+        if ($this->isTransactionRunning()) {
+            $transactionNode->setParent($this->currentTransaction);
+        }
 
         $this->currentTransaction = $transactionNode;
     }
@@ -146,7 +143,7 @@ class TransactionalDispatcher implements DispatcherContract
             'payload' => is_object($payload) ? clone $payload : $payload,
         ];
 
-        $this->currentTransaction->getValue()->push($eventData);
+        $this->currentTransaction->addDispatchedEvent($eventData);
         $this->events[$this->nextEventIndex++] = $eventData;
     }
 
@@ -163,7 +160,7 @@ class TransactionalDispatcher implements DispatcherContract
 
         $committedTransaction = $this->finishTransaction();
 
-        if (! $committedTransaction->isRoot()) {
+        if ($committedTransaction->hasParent()) {
             return;
         }
 
@@ -183,13 +180,13 @@ class TransactionalDispatcher implements DispatcherContract
 
         $rolledBackTransaction = $this->finishTransaction();
 
-        if ($rolledBackTransaction->isRoot()) {
+        if (! $rolledBackTransaction->hasParent()) {
             $this->resetEvents();
 
             return;
         }
 
-        $this->nextEventIndex -= $rolledBackTransaction->getValue()->count();
+        $this->nextEventIndex -= $rolledBackTransaction->countDispatchedEvents();
     }
 
     /**
@@ -213,7 +210,7 @@ class TransactionalDispatcher implements DispatcherContract
      */
     private function dispatchPendingEvents(): void
     {
-        // Prevent loops on event dispacthing. (See #12)
+        // Prevent loops on event dispatching. (See #12)
         $events = $this->events;
         $eventsCount = $this->nextEventIndex;
         $this->resetEvents();
@@ -242,9 +239,9 @@ class TransactionalDispatcher implements DispatcherContract
     /**
      * Finish current transaction.
      *
-     * @return \loophp\phptree\Node\ValueNodeInterface
+     * @return \Neves\Events\Transaction
      */
-    private function finishTransaction(): ValueNodeInterface
+    private function finishTransaction(): Transaction
     {
         $finished = $this->currentTransaction;
         $this->currentTransaction = $finished->getParent();

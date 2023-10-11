@@ -5,7 +5,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.0",
-        "loophp/phptree": "^2.5",
         "illuminate/database": "^8.0|^9.0|^10.0",
         "illuminate/events": "^8.0|^9.0|^10.0",
         "illuminate/support": "^8.0|^9.0|^10.0"
