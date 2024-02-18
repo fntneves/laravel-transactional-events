@@ -45,7 +45,7 @@ In the above example the `OrderCreated` event would never be dispatched in the c
  Laravel  | Package  | Notes
 :---------|:----------|:----------
  5.8.x-7.x     | 1.8.x    |
- 8.x-10.x       | 2.x      | >2.1.x requires PHP 8+
+ 8.x-11.x       | 2.x      | >2.1.x requires PHP 8+
 
 ### Laravel
 - Install this package via `composer`:
