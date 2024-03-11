@@ -5,9 +5,9 @@
     "license": "MIT",
     "require": {
         "php": "^8.0",
-        "illuminate/database": "^8.0|^9.0|^10.0",
-        "illuminate/events": "^8.0|^9.0|^10.0",
-        "illuminate/support": "^8.0|^9.0|^10.0"
+        "illuminate/database": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/events": "^8.0|^9.0|^10.0|^11.0",
+        "illuminate/support": "^8.0|^9.0|^10.0|^11.0"
     },
     "authors": [
         {
@@ -36,6 +36,6 @@
         "sort-packages": true
     },
     "require-dev": {
-        "orchestra/testbench": "^6.25.1|^7.22|^8.0"
+        "orchestra/testbench": "^6.25.1|^7.22|^8.0|^9.0|9.x-dev"
     }
 }
